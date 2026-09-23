@@ -1,762 +1,2087 @@
 <!DOCTYPE html>
-<html lang="ms" class="dark">
+<html lang="ms">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Reruai BPAD - Hari KM JANM 2026</title>
+  <title>Knowledge Management Showcase - BPAD JANM 2026</title>
   
-  <!-- Tailwind CSS & FontAwesome -->
+  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Font Awesome 6 CDN -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Google Fonts: Plus Jakarta Sans, Cinzel & Space Grotesk -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Canvas Confetti & jsPDF CDN -->
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            janm: {
-              navy: '#0B192C',
-              sapphire: '#002060',
-              cyan: '#00F0FF',
-              gold: '#D4AF37',
-              darkcard: 'rgba(11, 25, 44, 0.85)'
-            }
-          }
-        }
-      }
-    }
-  </script>
-
   <style>
     body {
-      background: radial-gradient(circle at top right, #002060 0%, #0B192C 70%, #030712 100%);
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #030a16;
+      color: #f1f5f9;
+      overflow-x: hidden;
     }
-    .circuit-lines {
-      background-image: radial-gradient(rgba(0, 240, 255, 0.15) 1px, transparent 0);
-      background-size: 24px 24px;
+
+    #circuitCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      pointer-events: none;
     }
+
     .glass-card {
-      background: rgba(11, 25, 44, 0.75);
-      backdrop-filter: blur(12px);
-      border: 1px solid rgba(0, 240, 255, 0.2);
+      background: rgba(8, 21, 44, 0.88);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      box-shadow: 0 10px 35px -5px rgba(2, 132, 199, 0.25);
     }
-    .glow-gold {
-      box-shadow: 0 0 25px rgba(212, 175, 55, 0.35);
+
+    .glass-card-kpi {
+      background: linear-gradient(135deg, rgba(8, 24, 52, 0.95), rgba(4, 15, 36, 0.9));
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(56, 189, 248, 0.22);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    .glow-cyan {
-      box-shadow: 0 0 25px rgba(0, 240, 255, 0.35);
+    .glass-card-kpi:hover {
+      border-color: rgba(56, 189, 248, 0.7);
+      transform: translateY(-2px);
+      box-shadow: 0 12px 30px -4px rgba(14, 165, 233, 0.35);
+    }
+
+    .quiz-question-box {
+      background: linear-gradient(135deg, rgba(8, 30, 68, 0.95), rgba(12, 45, 102, 0.9));
+      border: 1px solid rgba(56, 189, 248, 0.45);
+      box-shadow: 0 4px 15px rgba(2, 132, 199, 0.15);
+    }
+
+    .quiz-option-card {
+      background: rgba(4, 15, 34, 0.85);
+      border: 1px solid rgba(51, 65, 85, 0.85);
+      transition: all 0.2s ease;
+    }
+    .quiz-option-card:hover {
+      border-color: rgba(56, 189, 248, 0.85);
+      background: rgba(8, 30, 68, 0.75);
+      transform: translateX(4px);
+    }
+
+    .btn-cyber-cyan {
+      background: linear-gradient(135deg, #0284c7, #0369a1);
+      box-shadow: 0 4px 18px rgba(2, 132, 199, 0.4);
+      transition: all 0.25s ease;
+    }
+    .btn-cyber-cyan:hover {
+      background: linear-gradient(135deg, #0ea5e9, #0284c7);
+      box-shadow: 0 6px 24px rgba(14, 165, 233, 0.6);
+      transform: translateY(-1px);
+    }
+
+    .btn-cyber-gold {
+      background: linear-gradient(135deg, #d97706, #b45309);
+      box-shadow: 0 4px 18px rgba(217, 119, 6, 0.35);
+      transition: all 0.25s ease;
+    }
+    .btn-cyber-gold:hover {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      box-shadow: 0 6px 24px rgba(245, 158, 11, 0.55);
+      transform: translateY(-1px);
+    }
+
+    .wheel-pointer {
+      position: absolute;
+      top: -18px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 18px solid transparent;
+      border-right: 18px solid transparent;
+      border-top: 32px solid #f59e0b;
+      z-index: 20;
+      filter: drop-shadow(0 4px 12px rgba(245, 158, 11, 0.8));
+    }
+
+    @keyframes pulseGlow {
+      0%, 100% {
+        box-shadow: 0 0 20px rgba(56, 189, 248, 0.4), 0 0 40px rgba(245, 158, 11, 0.2);
+      }
+      50% {
+        box-shadow: 0 0 35px rgba(56, 189, 248, 0.8), 0 0 60px rgba(245, 158, 11, 0.4);
+      }
+    }
+    .pulse-glow {
+      animation: pulseGlow 2.5s infinite;
+    }
+
+    .live-dot-pulse {
+      animation: liveDot 1.4s infinite;
+    }
+    @keyframes liveDot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(1.3); }
     }
   </style>
 </head>
-<body class="text-slate-100 min-h-screen circuit-lines flex flex-col justify-between selection:bg-janm-cyan selection:text-black">
+<body class="min-h-screen flex flex-col justify-between selection:bg-cyan-500 selection:text-white">
 
-  <!-- Audio Player -->
-  <audio id="bgMusic" loop preload="auto">
-    <source src="avigeiaavetian-density-texture-abstract-electronic-586594.mp3" type="audio/mp3">
-  </audio>
+  <!-- Kanvas Latar Belakang Litar Siber -->
+  <canvas id="circuitCanvas"></canvas>
 
-  <!-- Pengepala Navigasi Rasmi -->
-  <header class="w-full bg-slate-950/80 border-b border-janm-cyan/30 backdrop-blur-md sticky top-0 z-40 px-4 py-3">
-    <div class="max-w-7xl mx-auto flex items-center justify-between">
-      <div class="flex items-center space-x-3">
-        <img src="JATA NEGARA.png" alt="Jata Negara" class="h-10 w-auto object-contain" onerror="this.style.display='none'">
+  <!-- Prapemuatan Imej Tempatan -->
+  <div style="position: absolute; width: 1px; height: 1px; overflow: hidden; opacity: 0; pointer-events: none;">
+    <img id="imgJata1" src="Logo Kementerian Kewangan JANM.png" alt="Logo Kementerian Kewangan JANM">
+    <img id="imgJata2" src="JATA NEGARA.png" alt="Jata Negara">
+    <img id="imgLogo80" src="Logo 80 Tahun JANM.png" alt="Logo 80 Tahun JANM">
+  </div>
+
+  <audio id="bgAudioPlayer" loop preload="auto" src="avigeiaavetian-density-texture-abstract-electronic-586594.mp3"></audio>
+
+  <!-- Pengepala Navigasi Korporat BPAD -->
+  <header class="sticky top-0 z-40 glass-card border-b border-cyan-500/20 px-4 py-3">
+    <div class="max-w-5xl mx-auto flex items-center justify-between">
+      
+      <div class="flex items-center gap-3">
+        <img src="Logo Kementerian Kewangan JANM.png" 
+             alt="Logo Kementerian Kewangan JANM" 
+             class="h-10 sm:h-12 w-auto object-contain drop-shadow"
+             onerror="this.onerror=null; this.src='JATA NEGARA.png';">
         <div>
-          <h1 class="text-sm sm:text-base font-bold tracking-wide text-white">BAHAGIAN PENGURUSAN AUDIT DALAM (BPAD)</h1>
-          <p class="text-xs text-janm-cyan">Jabatan Akauntan Negara Malaysia • Hari KM 2026</p>
+          <h1 class="text-xs md:text-sm font-bold tracking-wide text-cyan-300">
+            BAHAGIAN PENGURUSAN AUDIT DALAM (BPAD)
+          </h1>
+          <p class="text-[11px] text-slate-300">
+            Jabatan Akauntan Negara Malaysia
+          </p>
         </div>
       </div>
-      
-      <div class="flex items-center space-x-2">
-        <button onclick="toggleAudio()" id="audioBtn" class="p-2 rounded-full bg-slate-800 text-janm-cyan hover:bg-slate-700 transition" title="Muzik Latar">
-          <i class="fa-solid fa-volume-xmark" id="audioIcon"></i>
+
+      <div class="flex items-center gap-2">
+        <button id="toggleAudioBtn" 
+                onclick="toggleBackgroundMusic()"
+                title="Pasang / Henti Lagu" 
+                class="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-full bg-slate-800/90 hover:bg-slate-700 text-cyan-300 border border-cyan-500/30 transition">
+          <i id="audioIcon" class="fa-solid fa-volume-xmark text-slate-400"></i>
+          <span id="audioStatusText" class="hidden sm:inline">Lagu: Mati</span>
         </button>
-        <button onclick="openDashboardModal()" class="px-3 py-1.5 rounded-lg bg-janm-cyan/20 border border-janm-cyan/50 text-janm-cyan text-xs font-semibold hover:bg-janm-cyan/30 transition flex items-center space-x-2">
-          <i class="fa-solid fa-chart-line"></i>
+
+        <button onclick="toggleDashboardModal()" 
+                title="Papan Pemuka Prestasi Booth" 
+                class="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-full bg-slate-800/90 hover:bg-slate-700 text-amber-300 border border-amber-500/30 transition">
+          <i class="fa-solid fa-chart-pie"></i>
           <span class="hidden sm:inline">Papan Pemuka</span>
         </button>
       </div>
     </div>
   </header>
 
-  <!-- Skrin Selamat Datang (Welcome Screen Overlay) -->
-  <div id="welcomeScreen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/95 backdrop-blur-xl">
-    <div class="max-w-xl w-full text-center space-y-6 glass-card p-8 rounded-2xl border-janm-cyan/40 shadow-2xl">
-      <div class="flex justify-center space-x-4">
-        <img src="JATA NEGARA.png" alt="Jata" class="h-16 w-auto object-contain">
-        <img src="Logo 80 Tahun JANM.png" alt="80 Tahun" class="h-16 w-auto object-contain" onerror="this.style.display='none'">
+  <main class="max-w-4xl w-full mx-auto px-4 py-6 flex-grow space-y-6">
+
+    <!-- PAPAN PEMUKA PRESTASI BOOTH KM BPAD (SEGERAK AWAN 3 SAAT) -->
+    <section class="glass-card rounded-2xl p-4 sm:p-5 border border-cyan-500/30">
+      <div class="flex items-center justify-between border-b border-slate-700/60 pb-3 mb-4">
+        <div class="flex items-center gap-2.5">
+          <span class="w-3 h-3 rounded-full bg-emerald-400 live-dot-pulse shadow-[0_0_12px_#34d399]"></span>
+          <div>
+            <h2 class="text-xs sm:text-sm font-bold text-white tracking-wide uppercase flex items-center gap-1.5">
+              <span>Papan Pemuka Knowledge Management BPAD</span>
+              <span class="text-[9px] px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-500/40">🟢 LIVE DATA</span>
+            </h2>
+            <p class="text-[10px] text-slate-400">Diselaraskan secara automatik setiap 3 saat dari Google Sheets</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <span id="syncStatusBadge" class="text-[11px] px-2.5 py-0.5 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-500/40">
+            Awan: Bersambung
+          </span>
+        </div>
       </div>
+
+      <!-- 4 Kad Metrik Prestasi Glassmorphism -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
+        <!-- 1. Kehadiran -->
+        <div class="glass-card-kpi p-3.5 rounded-xl flex flex-col justify-between">
+          <div class="text-cyan-400 text-lg mb-1"><i class="fa-solid fa-users"></i></div>
+          <p class="text-[11px] text-slate-400">Kehadiran (Imbas QR)</p>
+          <h3 id="statVisitorsCount" class="text-2xl sm:text-3xl font-extrabold text-white mt-1">0</h3>
+          <span class="text-[10px] text-emerald-400 mt-1">Pelawat Berdaftar</span>
+        </div>
+
+        <!-- 2. Kuiz Tepat -->
+        <div class="glass-card-kpi p-3.5 rounded-xl flex flex-col justify-between">
+          <div class="text-amber-400 text-lg mb-1"><i class="fa-solid fa-circle-check"></i></div>
+          <p class="text-[11px] text-slate-400">Kuiz KM Tepat (3/3)</p>
+          <h3 id="statQuizPassCount" class="text-2xl sm:text-3xl font-extrabold text-white mt-1">0</h3>
+          <div class="w-full bg-slate-800 rounded-full h-1.5 mt-2 overflow-hidden">
+            <div id="statQuizPercentBar" class="bg-amber-400 h-full transition-all duration-500" style="width: 0%"></div>
+          </div>
+          <span id="statQuizPercentText" class="text-[10px] text-amber-300 mt-1">0% Skor Penuh (3/3)</span>
+        </div>
+
+        <!-- 3. Sijil Dijana -->
+        <div class="glass-card-kpi p-3.5 rounded-xl flex flex-col justify-between">
+          <div class="text-emerald-400 text-lg mb-1"><i class="fa-solid fa-award"></i></div>
+          <p class="text-[11px] text-slate-400">Sijil Digital Dijana</p>
+          <h3 id="statCertCount" class="text-2xl sm:text-3xl font-extrabold text-white mt-1">0</h3>
+          <div class="w-full bg-slate-800 rounded-full h-1.5 mt-2 overflow-hidden">
+            <div id="statCertPercentBar" class="bg-emerald-400 h-full transition-all duration-500" style="width: 0%"></div>
+          </div>
+          <span class="text-[10px] text-emerald-300 mt-1">Sijil Rasmi Diserah</span>
+        </div>
+
+        <!-- 4. Purata Penilaian / Rating -->
+        <div class="glass-card-kpi p-3.5 rounded-xl flex flex-col justify-between">
+          <div class="text-yellow-400 text-lg mb-1"><i class="fa-solid fa-star"></i></div>
+          <p class="text-[11px] text-slate-400">Purata Penilaian</p>
+          <h3 id="statAvgRating" class="text-2xl sm:text-3xl font-extrabold text-white mt-1">0.0</h3>
+          <div id="statAvgStarsDisplay" class="text-amber-400 text-xs mt-1">
+            <i class="fa-regular fa-star"></i><i class="fa-regular fa-star"></i><i class="fa-regular fa-star"></i><i class="fa-regular fa-star"></i><i class="fa-regular fa-star"></i>
+          </div>
+          <span id="statRatingCountText" class="text-[10px] text-slate-400 mt-1">0 Ulasan Diterima</span>
+        </div>
+      </div>
+
+      <!-- Suapan Aktiviti Terkini (Live Activity Feed) -->
+      <div class="mt-4 pt-3 border-t border-slate-700/60 flex items-center justify-between text-xs">
+        <div class="flex items-center gap-2 overflow-hidden text-slate-300">
+          <span class="text-cyan-400"><i class="fa-solid fa-bolt"></i></span>
+          <span class="font-semibold text-slate-400">Aktiviti Terkini:</span>
+          <span id="liveFeedTicker" class="truncate text-slate-200">Sistem bersedia menerima pelawat baharu...</span>
+        </div>
+        <span class="text-[10px] text-slate-400 hidden sm:inline">Penyegerakan: 3s</span>
+      </div>
+    </section>
+
+    <!-- SKRIN ALU-ALUAN KORPORAT -->
+    <section id="welcomeScreen" class="glass-card rounded-3xl p-6 sm:p-10 text-center space-y-6 transition-all duration-300">
       
-      <div class="space-y-2">
-        <span class="px-3 py-1 rounded-full text-xs font-semibold bg-janm-cyan/20 text-janm-cyan border border-janm-cyan/40">Knowledge Management Showcase</span>
-        <h2 class="text-2xl sm:text-3xl font-extrabold text-white">Bahagian Pengurusan Audit Dalam</h2>
-        <p class="text-slate-300 text-sm">Selamat Datang ke Reruai Interaktif KM BPAD • Hari KM JANM 2026</p>
+      <div class="flex items-center justify-center gap-4 sm:gap-8 flex-wrap pt-2">
+        <img src="Logo Kementerian Kewangan JANM.png" 
+             alt="Logo Kementerian Kewangan JANM" 
+             class="h-16 sm:h-20 w-auto object-contain drop-shadow-lg"
+             onerror="this.onerror=null; this.src='JATA NEGARA.png';">
+        <div class="h-12 w-[1px] bg-slate-700 hidden sm:block"></div>
+        <img src="Logo 80 Tahun JANM.png" 
+             alt="Logo 80 Tahun JANM" 
+             class="h-16 sm:h-20 w-auto object-contain drop-shadow-lg"
+             onerror="this.onerror=null; this.style.display='none';">
       </div>
 
-      <div class="p-4 bg-slate-900/60 rounded-xl border border-slate-800 text-left text-xs space-y-2 text-slate-300">
-        <p class="font-semibold text-janm-gold flex items-center"><i class="fa-solid fa-circle-info mr-2"></i>Panduan Ringkas Peserta:</p>
-        <ul class="list-disc list-inside space-y-1">
-          <li>Isi maklumat peribadi (Nama & No. KP).</li>
-          <li>Jawab 3 soalan kuiz KM BPAD.</li>
-          <li>Putar Roda Cabutan Bertuah untuk hadiah menarik.</li>
-          <li>Terima Sijil Penghargaan Digital rasmi anda.</li>
-        </ul>
-      </div>
-
-      <button onclick="enterAppAndPlayMusic()" class="w-full py-4 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 font-bold text-white shadow-lg hover:brightness-110 transition flex items-center justify-center space-x-2 text-base">
-        <span>KLIK UNTUK MASUK & MULA</span>
-        <i class="fa-solid fa-arrow-right"></i>
-      </button>
-    </div>
-  </div>
-
-  <!-- Kandungan Utama (Multi-Step Form Container) -->
-  <main class="max-w-4xl mx-auto w-full px-4 py-6 flex-1 flex flex-col justify-center">
-    
-    <!-- STEP 1: Pendaftaran Peserta -->
-    <div id="step1" class="glass-card p-6 sm:p-8 rounded-2xl space-y-6">
-      <div class="border-b border-slate-800 pb-4">
-        <h3 class="text-xl font-bold text-white flex items-center">
-          <span class="w-8 h-8 rounded-full bg-janm-cyan/20 text-janm-cyan flex items-center justify-center text-sm mr-3 border border-janm-cyan/40">1</span>
-          Pendaftaran Peserta Reruai
-        </h3>
-        <p class="text-xs text-slate-400 mt-1">Sila masukkan maklumat peribadi anda untuk pendaftaran sijil digital.</p>
-      </div>
-
-      <div class="space-y-4">
-        <div>
-          <label class="block text-xs font-medium text-slate-300 mb-1">Nama Penuh (Seperti Dalam MyKad)</label>
-          <input type="text" id="inputNama" placeholder="CONTOH: AHMAD BIN ABDULLAH" class="w-full px-4 py-3 rounded-xl bg-slate-900/80 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-janm-cyan uppercase text-sm">
+      <div class="space-y-2.5 max-w-2xl mx-auto">
+        <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-cyan-950/70 border border-cyan-500/40 text-cyan-300 text-xs font-semibold">
+          <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
+          Knowledge Management Showcase · Hari KM JANM 2026
         </div>
-
-        <div>
-          <label class="block text-xs font-medium text-slate-300 mb-1">Nombor Kad Pengenalan (12 Digit Tanpa -)</label>
-          <input type="text" id="inputIC" maxlength="12" placeholder="CONTOH: 900101145522" class="w-full px-4 py-3 rounded-xl bg-slate-900/80 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-janm-cyan text-sm">
-        </div>
-
-        <div>
-          <label class="block text-xs font-medium text-slate-300 mb-1">Alamat E-mel (Untuk Salinan Sijil Digital - Opsional)</label>
-          <input type="email" id="inputEmail" placeholder="CONTOH: ahmad@anm.gov.my" class="w-full px-4 py-3 rounded-xl bg-slate-900/80 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-janm-cyan text-sm">
-        </div>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+          Selamat Datang ke Booth BPAD
+        </h2>
+        <p class="text-xs sm:text-sm text-cyan-300 font-semibold tracking-wide">
+          BAHAGIAN PENGURUSAN AUDIT DALAM (BPAD) · JABATAN AKAUNTAN NEGARA MALAYSIA
+        </p>
+        <p class="text-xs sm:text-sm text-slate-300 leading-relaxed pt-1">
+          Sila klik butang di bawah untuk mendaftar, menjawab 3 soalan mudah KM, memutar roda cabutan hadiah bertuah dan menjana Sijil Penghargaan Digital rasmi anda!
+        </p>
+        <p class="text-xs text-slate-400">
+          <i class="fa-regular fa-calendar text-cyan-400 mr-1"></i> 28 September 2026 &nbsp;|&nbsp; 
+          <i class="fa-solid fa-location-dot text-rose-400 mr-1"></i> Lobi Utama, JANM Putrajaya
+        </p>
       </div>
 
-      <button onclick="validateStep1()" class="w-full py-3.5 rounded-xl bg-janm-cyan text-slate-950 font-bold hover:bg-cyan-300 transition flex items-center justify-center space-x-2 text-sm shadow-md">
-        <span>Seterusnya: Mula Kuiz KM</span>
-        <i class="fa-solid fa-arrow-right"></i>
-      </button>
-    </div>
-
-    <!-- STEP 2: Kuiz Interaktif KM -->
-    <div id="step2" class="glass-card p-6 sm:p-8 rounded-2xl space-y-6 hidden">
-      <div class="border-b border-slate-800 pb-4 flex justify-between items-center">
-        <div>
-          <h3 class="text-xl font-bold text-white flex items-center">
-            <span class="w-8 h-8 rounded-full bg-janm-cyan/20 text-janm-cyan flex items-center justify-center text-sm mr-3 border border-janm-cyan/40">2</span>
-            Kuiz Knowledge Management BPAD
-          </h3>
-          <p class="text-xs text-slate-400 mt-1">Jawab 3 soalan pengetahuan amaran dan amalan KM BPAD.</p>
-        </div>
-        <span class="text-xs font-bold text-janm-gold bg-janm-gold/10 px-3 py-1 rounded-full border border-janm-gold/30">3 Soalan</span>
-      </div>
-
-      <div id="dynamicQuizContainer" class="space-y-6"></div>
-
-      <button onclick="verifyQuizAnswers()" class="w-full py-3.5 rounded-xl bg-janm-cyan text-slate-950 font-bold hover:bg-cyan-300 transition flex items-center justify-center space-x-2 text-sm shadow-md">
-        <span>Semak Jawapan & Ke Roda Hadiah</span>
-        <i class="fa-solid fa-award"></i>
-      </button>
-    </div>
-
-    <!-- STEP 3: Roda Cabutan Bertuah & Rating -->
-    <div id="step3" class="glass-card p-6 sm:p-8 rounded-2xl space-y-6 hidden text-center">
-      <div class="border-b border-slate-800 pb-4">
-        <h3 class="text-xl font-bold text-white">Tahniah! Anda Lulus Kuiz KM</h3>
-        <p class="text-xs text-slate-400 mt-1">Sila putar Roda Cabutan Bertuah untuk memenangi cenderahati reruai BPAD.</p>
-      </div>
-
-      <!-- Canvas Roda -->
-      <div class="flex flex-col items-center justify-center relative my-4">
-        <div class="w-0 h-0 border-l-[12px] border-l-transparent border-r-[12px] border-r-transparent border-t-[20px] border-t-janm-gold absolute -top-3 z-20"></div>
-        <canvas id="wheelCanvas" width="300" height="300" class="rounded-full shadow-2xl border-4 border-janm-gold/50 glow-gold"></canvas>
-        <button id="spinBtn" onclick="spinWheel()" class="mt-4 px-6 py-2.5 rounded-full bg-gradient-to-r from-amber-400 to-yellow-600 font-bold text-slate-950 hover:brightness-110 transition shadow-lg text-sm">
-          <i class="fa-solid fa-rotate mr-2"></i>PUTAR RODA HADIAH
+      <div class="pt-2 pb-2">
+        <button id="btnEnterApp" 
+                onclick="enterAppAndPlayMusic()" 
+                class="w-full sm:w-auto px-8 py-4 rounded-2xl btn-cyber-cyan text-white text-base font-bold flex items-center justify-center gap-3 mx-auto shadow-2xl pulse-glow transform hover:scale-105 transition">
+          <i class="fa-solid fa-play text-amber-400 text-lg"></i>
+          <span>KLIK UNTUK MASUK & MULA</span>
+          <i class="fa-solid fa-arrow-right text-cyan-200"></i>
         </button>
+        <p class="text-[11px] text-slate-400 mt-3">
+          <i class="fa-solid fa-music text-cyan-400 mr-1"></i> Lagu latar akan dimainkan secara automatik apabila anda klik masuk.
+        </p>
       </div>
 
-      <!-- Rating Penilaian -->
-      <div class="p-4 bg-slate-900/60 rounded-xl border border-slate-800 space-y-2">
-        <label class="block text-xs font-medium text-slate-300">Nilaikan Kepuasan Anda Terhadap Reruai BPAD</label>
-        <div class="flex justify-center space-x-2 text-2xl text-amber-400" id="starContainer">
-          <i class="fa-solid fa-star cursor-pointer hover:scale-110 transition" onclick="setRating(1)"></i>
-          <i class="fa-solid fa-star cursor-pointer hover:scale-110 transition" onclick="setRating(2)"></i>
-          <i class="fa-solid fa-star cursor-pointer hover:scale-110 transition" onclick="setRating(3)"></i>
-          <i class="fa-solid fa-star cursor-pointer hover:scale-110 transition" onclick="setRating(4)"></i>
-          <i class="fa-solid fa-star cursor-pointer hover:scale-110 transition" onclick="setRating(5)"></i>
+      <div class="grid grid-cols-3 gap-2 pt-4 border-t border-slate-700/60 text-center text-xs text-slate-300">
+        <div class="p-2.5 rounded-xl bg-slate-900/60 border border-slate-800">
+          <i class="fa-solid fa-id-card text-cyan-400 block mb-1 text-sm"></i> 1. Pendaftaran
+        </div>
+        <div class="p-2.5 rounded-xl bg-slate-900/60 border border-slate-800">
+          <i class="fa-solid fa-gift text-amber-400 block mb-1 text-sm"></i> 2. Kuiz & Hadiah
+        </div>
+        <div class="p-2.5 rounded-xl bg-slate-900/60 border border-slate-800">
+          <i class="fa-solid fa-award text-emerald-400 block mb-1 text-sm"></i> 3. Sijil Digital
+        </div>
+      </div>
+    </section>
+
+    <!-- ALIRAN BORANG, KUIZ & SIJIL -->
+    <div id="mainWorkflowContainer" class="hidden space-y-6">
+
+      <div class="glass-card rounded-xl p-3">
+        <div class="grid grid-cols-3 gap-2 text-center text-xs">
+          <div id="stepIndicator1" class="py-1.5 rounded-lg font-semibold bg-cyan-600/30 text-cyan-300 border border-cyan-500/50">
+            <i class="fa-solid fa-id-card mr-1"></i> 1. Maklumat
+          </div>
+          <div id="stepIndicator2" class="py-1.5 rounded-lg font-medium bg-slate-800/60 text-slate-400 border border-transparent">
+            <i class="fa-solid fa-puzzle-piece mr-1"></i> 2. Kuiz & Hadiah
+          </div>
+          <div id="stepIndicator3" class="py-1.5 rounded-lg font-medium bg-slate-800/60 text-slate-400 border border-transparent">
+            <i class="fa-solid fa-award mr-1"></i> 3. Sijil Digital
+          </div>
         </div>
       </div>
 
-      <button onclick="handleGenerateCertificate()" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-bold hover:brightness-110 transition flex items-center justify-center space-x-2 text-sm shadow-md">
-        <i class="fa-solid fa-certificate"></i>
-        <span>Jana Sijil Penghargaan Digital</span>
-      </button>
-    </div>
+      <!-- LANGKAH 1: BORANG MAKLUMAT PESERTA -->
+      <section id="step1Card" class="glass-card rounded-2xl p-6 transition-all duration-300">
+        <div class="flex items-center justify-between border-b border-slate-700/60 pb-3 mb-4">
+          <div>
+            <h3 class="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-user-check text-cyan-400"></i> Pendaftaran Pelawat Booth BPAD
+            </h3>
+            <p class="text-xs text-slate-300">Nama ini akan dicetak pada Sijil Penghargaan Digital anda.</p>
+          </div>
+          <span class="text-xs px-2.5 py-1 rounded bg-slate-800 text-cyan-300 font-mono">1 / 3</span>
+        </div>
 
-    <!-- STEP 4: Paparan Sijil Digital Muktamad -->
-    <div id="step4" class="glass-card p-6 sm:p-8 rounded-2xl space-y-6 hidden text-center">
-      <div class="border-b border-slate-800 pb-4">
-        <span class="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">Sijil Berjaya Dijana</span>
-        <h3 class="text-xl font-bold text-white mt-2">Sijil Penghargaan Digital Reruai BPAD</h3>
-        <p class="text-xs text-slate-400">Terima kasih atas penyertaan anda dalam Hari KM JANM 2026.</p>
-      </div>
+        <form id="participantForm" onsubmit="handleProceedToStep2(event)" class="space-y-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Nama Penuh (Huruf Besar) *</label>
+            <div class="relative">
+              <i class="fa-regular fa-user absolute left-3.5 top-3.5 text-slate-400 text-sm"></i>
+              <input type="text" id="fullName" required 
+                     placeholder="CONTOH: AHMAD DANIAL BIN ABDULLAH" 
+                     class="w-full pl-10 pr-3 py-2.5 rounded-xl bg-slate-900/90 border border-slate-700 text-white text-sm focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none uppercase transition">
+            </div>
+          </div>
 
-      <!-- Canvas Sijil -->
-      <div class="overflow-x-auto flex justify-center py-2">
-        <canvas id="certCanvas" width="1200" height="848" class="max-w-full h-auto rounded-lg shadow-2xl border border-slate-700"></canvas>
-      </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">E-mel Rasmi / Peribadi *</label>
+              <div class="relative">
+                <i class="fa-regular fa-envelope absolute left-3.5 top-3.5 text-slate-400 text-sm"></i>
+                <input type="email" id="email" required 
+                       placeholder="nama@anm.gov.my" 
+                       class="w-full pl-10 pr-3 py-2.5 rounded-xl bg-slate-900/90 border border-slate-700 text-white text-sm focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none transition">
+              </div>
+            </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-        <button onclick="downloadCertPNG()" class="py-3 rounded-xl bg-slate-800 border border-janm-cyan/40 text-janm-cyan font-bold hover:bg-slate-700 transition flex items-center justify-center space-x-2 text-xs">
-          <i class="fa-solid fa-download"></i>
-          <span>Muat Turun Gambar (PNG)</span>
-        </button>
-        <button onclick="sendEmailCopy()" id="btnEmailCopy" class="py-3 rounded-xl bg-janm-cyan text-slate-950 font-bold hover:bg-cyan-300 transition flex items-center justify-center space-x-2 text-xs">
-          <i class="fa-solid fa-envelope"></i>
-          <span>Salinkan ke E-mel & Google Drive</span>
-        </button>
-      </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">No. Kad Pengenalan (12 Digit Sahaja) *</label>
+              <div class="relative">
+                <i class="fa-solid fa-id-badge absolute left-3.5 top-3.5 text-slate-400 text-sm"></i>
+                <input type="text" id="idNumber" required 
+                       maxlength="12"
+                       pattern="[0-9]{12}"
+                       inputmode="numeric"
+                       placeholder="Contoh: 000101011234" 
+                       oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 12)"
+                       class="w-full pl-10 pr-3 py-2.5 rounded-xl bg-slate-900/90 border border-slate-700 text-white text-sm focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none font-mono transition">
+              </div>
+              <p class="text-[10px] text-slate-400 mt-1">Masukkan 12 digit nombor sahaja tanpa tanda sempang (-)</p>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Bahagian / Jabatan / Agensi *</label>
+            <div class="relative">
+              <i class="fa-solid fa-building-columns absolute left-3.5 top-3.5 text-slate-400 text-sm"></i>
+              <input type="text" id="organization" required 
+                     placeholder="CONTOH: BAHAGIAN PENGURUSAN AUDIT DALAM (BPAD)" 
+                     oninput="this.value = this.value.toUpperCase()"
+                     class="w-full pl-10 pr-3 py-2.5 rounded-xl bg-slate-900/90 border border-slate-700 text-white text-sm focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none uppercase transition">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-2">Kategori Pelawat *</label>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
+              <label class="flex items-center gap-2.5 p-3 rounded-xl bg-slate-900/80 border border-slate-700 cursor-pointer hover:border-cyan-500 transition">
+                <input type="radio" name="visitorCategory" value="Warga JANM / Kem Kewangan" checked class="text-cyan-600 focus:ring-cyan-500">
+                <span class="font-medium text-slate-200">Warga JANM / Kem Kewangan</span>
+              </label>
+              <label class="flex items-center gap-2.5 p-3 rounded-xl bg-slate-900/80 border border-slate-700 cursor-pointer hover:border-cyan-500 transition">
+                <input type="radio" name="visitorCategory" value="Agensi Awam Lain" class="text-cyan-600 focus:ring-cyan-500">
+                <span class="font-medium text-slate-200">Agensi Awam Lain</span>
+              </label>
+              <label class="flex items-center gap-2.5 p-3 rounded-xl bg-slate-900/80 border border-slate-700 cursor-pointer hover:border-cyan-500 transition">
+                <input type="radio" name="visitorCategory" value="Orang Awam / Swasta" class="text-cyan-600 focus:ring-cyan-500">
+                <span class="font-medium text-slate-200">Orang Awam / Swasta</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="pt-3">
+            <button id="btnProceedToStep2" type="submit" class="w-full btn-cyber-cyan text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 text-sm">
+              <span id="btnProceedText">Seterusnya: Jawab 3 Soalan Kuiz KM</span>
+              <i class="fa-solid fa-arrow-right"></i>
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <!-- LANGKAH 2: 3 SOALAN KUIZ RAWAK & RODA HADIAH -->
+      <section id="step2Card" class="hidden glass-card rounded-2xl p-6 space-y-5">
+        <div class="flex items-center justify-between border-b border-slate-700/60 pb-3">
+          <div>
+            <h3 class="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-list-check text-cyan-400"></i> 3 Soalan Mudah Knowledge Management (KM)
+            </h3>
+            <p class="text-xs text-slate-300">Susunan jawapan diacak secara rawak. Jawab betul semua untuk memutar roda hadiah!</p>
+          </div>
+          <span class="text-xs px-2.5 py-1 rounded bg-slate-800 text-cyan-300 font-mono">2 / 3</span>
+        </div>
+
+        <div id="dynamicQuizContainer" class="space-y-4"></div>
+
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-1">
+          <button type="button" onclick="verifyQuizAnswers()" class="w-full sm:w-auto btn-cyber-cyan px-6 py-2.5 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2">
+            <i class="fa-solid fa-circle-check"></i> Semak Jawapan Kuiz
+          </button>
+          <span id="quizScoreBadge" class="text-xs font-semibold text-slate-400">Belum disemak</span>
+        </div>
+
+        <div id="quizFeedbackMessage" class="text-xs"></div>
+
+        <!-- BAHAGIAN RODA CABUTAN BERTUAH -->
+        <div id="prizeWheelSection" class="hidden pt-4 border-t border-slate-700 space-y-4">
+          <div class="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-center">
+            <h4 class="text-sm sm:text-base font-bold text-amber-300 flex items-center justify-center gap-2">
+              <i class="fa-solid fa-gift"></i> Tahniah! Anda Layak Untuk Putaran Hadiah
+            </h4>
+            <p class="text-xs text-slate-200 mt-1">
+              Sila putar roda di bawah untuk menentukan Kategori Hadiah anda (Kategori 1 hingga 5). Hadiah boleh dituntut terus dengan urusetia booth BPAD!
+            </p>
+          </div>
+
+          <div class="relative max-w-[300px] mx-auto py-1">
+            <div class="wheel-pointer"></div>
+            <canvas id="wheelCanvas" width="300" height="300" class="mx-auto drop-shadow-[0_0_20px_rgba(14,165,233,0.35)]"></canvas>
+            
+            <div class="mt-4 text-center">
+              <button id="spinWheelBtn" 
+                      type="button" 
+                      onclick="spinPrizeWheel()"
+                      class="btn-cyber-gold text-white font-bold text-xs sm:text-sm px-6 py-3 rounded-xl shadow-lg">
+                <i class="fa-solid fa-rotate mr-1"></i> Putar Roda Sekarang!
+              </button>
+            </div>
+          </div>
+
+          <div id="prizeWonBox" class="hidden p-4 rounded-xl bg-emerald-950/70 border border-emerald-500/50 text-center space-y-2">
+            <div class="inline-block px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 font-bold text-xs" id="prizeCategoryBadge">
+              ★ HADIAH KATEGORI 1 ★
+            </div>
+            <h5 class="text-base sm:text-lg font-extrabold text-white">
+              Anda Memenangi: <span id="prizeCategoryText" class="text-emerald-400">Kategori Hadiah 1</span>
+            </h5>
+            <p class="text-xs text-slate-300">
+              Sila maklumkan kepada urusetia booth BPAD untuk menuntut hadiah anda.
+            </p>
+          </div>
+
+          <!-- Penilaian Ringkas Booth BPAD (Wajib Diisi) -->
+          <div class="p-3.5 rounded-xl bg-slate-900/80 border border-slate-700 space-y-2">
+            <label class="block text-xs font-semibold text-slate-300">
+              Penilaian Ringkas Booth BPAD <span class="text-rose-400">* (Wajib Diisi)</span>
+            </label>
+            <div class="flex items-center gap-2" id="starRatingContainer">
+              <button type="button" onclick="setRating(1)" class="star-btn text-slate-600 text-lg hover:text-amber-400 transition"><i class="fa-solid fa-star"></i></button>
+              <button type="button" onclick="setRating(2)" class="star-btn text-slate-600 text-lg hover:text-amber-400 transition"><i class="fa-solid fa-star"></i></button>
+              <button type="button" onclick="setRating(3)" class="star-btn text-slate-600 text-lg hover:text-amber-400 transition"><i class="fa-solid fa-star"></i></button>
+              <button type="button" onclick="setRating(4)" class="star-btn text-slate-600 text-lg hover:text-amber-400 transition"><i class="fa-solid fa-star"></i></button>
+              <button type="button" onclick="setRating(5)" class="star-btn text-slate-600 text-lg hover:text-amber-400 transition"><i class="fa-solid fa-star"></i></button>
+              <span id="ratingFeedbackText" class="text-xs text-slate-400 font-medium ml-2">Sila pilih penilaian bintang anda</span>
+            </div>
+            <input type="text" id="visitorFeedback" placeholder="Ucapan atau cadangan ringkas untuk BPAD (Pilihan)" class="w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-xs text-white focus:outline-none focus:border-cyan-500">
+          </div>
+
+          <div class="pt-2">
+            <button type="button" onclick="handleGenerateCertificate()" class="w-full btn-cyber-cyan text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 text-sm">
+              <span>Jana Sijil Penghargaan Digital Anda</span>
+              <i class="fa-solid fa-award"></i>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- LANGKAH 3: SIJIL PENGHARGAAN DIGITAL -->
+      <section id="step3Card" class="hidden glass-card rounded-2xl p-6 space-y-5">
+        <div class="flex items-center justify-between border-b border-slate-700/60 pb-3">
+          <div>
+            <h3 class="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-certificate text-cyan-400"></i> Sijil Penghargaan Digital
+            </h3>
+            <p class="text-xs text-slate-300">Sijil rasmi anda telah berjaya dijana. Dilengkapi Kod QR Pengesahan Ketulenan.</p>
+          </div>
+          <span class="text-xs px-2.5 py-1 rounded bg-slate-800 text-cyan-300 font-mono">3 / 3</span>
+        </div>
+
+        <div class="relative rounded-xl overflow-hidden border border-cyan-500/50 shadow-2xl bg-[#041028]">
+          <canvas id="certificateCanvas" width="1600" height="1131" class="w-full h-auto block"></canvas>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+          <button type="button" onclick="downloadCertificatePng()" class="btn-cyber-cyan text-white py-2.5 px-4 rounded-xl font-semibold text-xs flex items-center justify-center gap-2">
+            <i class="fa-solid fa-download"></i> Simpan Gambar (PNG)
+          </button>
+
+          <button type="button" onclick="downloadCertificatePdf()" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white py-2.5 px-4 rounded-xl font-semibold text-xs flex items-center justify-center gap-2">
+            <i class="fa-solid fa-file-pdf text-rose-400"></i> Muat Turun PDF
+          </button>
+
+          <button type="button" id="btnSendEmailCopy" onclick="handleSendEmailCopy()" class="btn-cyber-gold text-white py-2.5 px-4 rounded-xl font-semibold text-xs flex items-center justify-center gap-2">
+            <i class="fa-solid fa-paper-plane"></i> Salinkan ke E-mel
+          </button>
+        </div>
+
+        <div class="text-center pt-2">
+          <button type="button" onclick="resetToNewVisitor()" class="text-xs text-slate-400 hover:text-cyan-300 transition">
+            <i class="fa-solid fa-rotate-left mr-1"></i> Daftar Pelawat Lain
+          </button>
+        </div>
+      </section>
+
     </div>
 
   </main>
 
-  <!-- MODAL PAPAN PEMUKA (PUBLIC READ-ONLY WITH LIVE DATA) -->
-  <div id="dashboardModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md hidden">
-    <div class="max-w-3xl w-full glass-card p-6 rounded-2xl border-janm-cyan/40 shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto">
-      
-      <div class="flex justify-between items-center border-b border-slate-800 pb-4">
-        <div>
-          <h3 id="dashTitle" onclick="handleAdminTap()" class="text-lg font-bold text-white flex items-center cursor-pointer select-none">
-            <i class="fa-solid fa-chart-pie text-janm-cyan mr-2"></i>
-            Ringkasan Prestasi Reruai BPAD
-          </h3>
-          <p class="text-xs text-slate-400">Hari Knowledge Management JANM 2026</p>
+  <footer class="glass-card border-t border-cyan-500/20 py-4 px-4 text-center text-xs text-slate-400">
+    <div class="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
+      <p>
+        © 2026 Bahagian Pengurusan Audit Dalam (BPAD) · Jabatan Akauntan Negara Malaysia
+      </p>
+      <p class="text-[11px] text-slate-400">
+        Perakaunan dan Kewangan Mampan Melalui Pendigitalan
+      </p>
+    </div>
+  </footer>
+
+  <!-- Modal Papan Pemuka Analitis (Bersih Tanpa Butang Mengelirukan) -->
+  <div id="dashboardModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
+    <div class="glass-card max-w-lg w-full rounded-2xl p-6 border border-cyan-500/40 space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-slate-700 pb-3">
+        <h3 id="adminSecretTrigger" 
+            onclick="handleAdminSecretTap()" 
+            title="Ketik 5 kali untuk mod kawalan Urusetia"
+            class="text-sm font-bold text-white flex items-center gap-2 cursor-pointer select-none">
+          <i class="fa-solid fa-chart-pie text-cyan-400"></i> Ringkasan Prestasi Booth BPAD
+        </h3>
+        <button onclick="toggleDashboardModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3 text-xs">
+        <div class="glass-card-kpi p-3.5 rounded-xl">
+          <span class="text-slate-400 block">Jumlah Pelawat</span>
+          <span id="modalVisitors" class="text-xl font-extrabold text-cyan-300">0</span>
         </div>
-        <div class="flex items-center space-x-2">
-          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">
-            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping mr-1.5"></span>
-            LIVE DATA
-          </span>
-          <button onclick="closeDashboardModal()" class="text-slate-400 hover:text-white p-2">
-            <i class="fa-solid fa-xmark text-lg"></i>
-          </button>
+        <div class="glass-card-kpi p-3.5 rounded-xl">
+          <span class="text-slate-400 block">Kuiz Tepat (3/3)</span>
+          <span id="modalQuizPass" class="text-xl font-extrabold text-amber-300">0</span>
+        </div>
+        <div class="glass-card-kpi p-3.5 rounded-xl">
+          <span class="text-slate-400 block">Sijil Dijana</span>
+          <span id="modalCerts" class="text-xl font-extrabold text-emerald-300">0</span>
+        </div>
+        <div class="glass-card-kpi p-3.5 rounded-xl">
+          <span class="text-slate-400 block">Kepuasan Purata</span>
+          <span id="modalRating" class="text-xl font-extrabold text-yellow-300">0.0 / 5.0</span>
         </div>
       </div>
 
-      <!-- Stats Cards Grid -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800 text-center">
-          <p class="text-xs text-slate-400">Jumlah Pelawat</p>
-          <p class="text-2xl font-extrabold text-janm-cyan mt-1" id="dashVisitors">0</p>
-        </div>
-        <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800 text-center">
-          <p class="text-xs text-slate-400">Kuiz Tepat (3/3)</p>
-          <p class="text-2xl font-extrabold text-emerald-400 mt-1" id="dashQuizzes">0</p>
-        </div>
-        <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800 text-center">
-          <p class="text-xs text-slate-400">Sijil Dijana</p>
-          <p class="text-2xl font-extrabold text-janm-gold mt-1" id="dashCerts">0</p>
-        </div>
-        <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800 text-center">
-          <p class="text-xs text-slate-400">Purata Penilaian</p>
-          <p class="text-2xl font-extrabold text-amber-400 mt-1" id="dashRating">5.0 / 5.0</p>
-        </div>
+      <div class="p-3.5 rounded-xl bg-cyan-950/40 border border-cyan-500/30 text-xs space-y-1.5">
+        <p class="font-semibold text-cyan-300 flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Status Hari KM JANM 2026:
+        </p>
+        <p class="text-slate-300">Data papan pemuka ini diselaraskan secara langsung (live 3s) daripada interaksi pelawat yang mengimbas kod QR di reruai BPAD.</p>
       </div>
 
-      <!-- Activity Feed -->
-      <div class="p-4 bg-slate-900/60 rounded-xl border border-slate-800">
-        <h4 class="text-xs font-semibold text-slate-300 mb-2 flex items-center">
-          <i class="fa-solid fa-stream mr-2 text-janm-cyan"></i>Aktiviti Terbaharu Reruai:
-        </h4>
-        <div id="recentActivityFeed" class="space-y-1.5 text-xs text-slate-400">
-          <p class="italic">Memuatkan data aktiviti...</p>
-        </div>
+      <div class="flex justify-end items-center pt-2">
+        <button onclick="toggleDashboardModal()" class="px-6 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-semibold transition">
+          Tutup
+        </button>
       </div>
-
-      <div class="flex justify-between items-center text-xs text-slate-500 pt-2 border-t border-slate-800">
-        <span id="lastUpdatedTime">Kemaskini: Automatik (3 Saat)</span>
-        <button onclick="closeDashboardModal()" class="px-4 py-2 rounded-lg bg-slate-800 text-white hover:bg-slate-700 transition">Tutup</button>
-      </div>
-
     </div>
   </div>
 
-  <!-- Footer -->
-  <footer class="w-full text-center py-3 text-xs text-slate-500 border-t border-slate-900">
-    Bahagian Pengurusan Audit Dalam (BPAD) • Jabatan Akauntan Negara Malaysia © 2026
-  </footer>
+  <!-- Modal Kata Laluan Urusetia (Mod Tersembunyi) -->
+  <div id="adminPinModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+    <div class="glass-card max-w-xs w-full rounded-2xl p-5 border border-cyan-500/50 space-y-3 text-center shadow-2xl">
+      <div class="w-10 h-10 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center mx-auto text-lg">
+        <i class="fa-solid fa-lock"></i>
+      </div>
+      <div>
+        <h4 class="text-sm font-bold text-white">Mod Kawalan Urusetia</h4>
+        <p class="text-[11px] text-slate-300 mt-0.5">Masukkan PIN Keselamatan untuk Reset Papan Pemuka.</p>
+      </div>
+      <div>
+        <input type="password" id="adminPinInput" maxlength="10" placeholder="PIN Urusetia" class="w-full text-center tracking-widest px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white focus:outline-none focus:border-cyan-500">
+        <p id="adminPinError" class="hidden text-[10px] text-rose-400 mt-1 font-semibold">PIN tidak sah. Sila cuba lagi.</p>
+      </div>
+      <div class="flex justify-center gap-2 pt-1">
+        <button onclick="verifyAdminPinAndProceed()" class="px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold transition">Sahkan</button>
+        <button onclick="closeAdminPinModal()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs transition">Batal</button>
+      </div>
+    </div>
+  </div>
 
-  <!-- SCRIPT UTAMA LOGIK APPLICATION -->
+  <!-- Modal Pengesahan Reset Urusetia -->
+  <div id="resetConfirmModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+    <div class="glass-card max-w-sm w-full rounded-2xl p-5 border border-rose-500/40 space-y-3 text-center">
+      <div class="w-12 h-12 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center mx-auto text-xl">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+      </div>
+      <h4 class="text-sm font-bold text-white">Tetapkan Semula Papan Pemuka?</h4>
+      <p class="text-xs text-slate-300">Tindakan ini akan mengosongkan semua statistik pelawat di awan dan memadam rekod no. KP berdaftar.</p>
+      <div class="flex justify-center gap-2 pt-2">
+        <button onclick="executeResetDashboard()" class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold">Ya, Tetapkan ke 0</button>
+        <button onclick="closeResetConfirmModal()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs">Batal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Box -->
+  <div id="toastNotification" class="fixed bottom-5 right-5 z-50 max-w-sm w-full glass-card rounded-xl p-4 border border-cyan-500/50 shadow-2xl flex items-start gap-3 transform translate-y-32 transition-all duration-300">
+    <div id="toastIcon" class="text-cyan-400 text-lg mt-0.5"><i class="fa-solid fa-circle-check"></i></div>
+    <div class="flex-grow">
+      <h5 id="toastTitle" class="text-xs font-bold text-white">Makluman</h5>
+      <p id="toastMessage" class="text-[11px] text-slate-300 mt-0.5">Operasi berjaya.</p>
+    </div>
+    <button onclick="hideToast()" class="text-slate-400 hover:text-white text-xs"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+
   <script>
-    // URL Deployment Google Apps Script Rasmi Anda
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz_XXXXXXXXXXXXXX_REPLACE_WITH_YOUR_DEPLOYMENT_URL/exec";
+    const circuitCanvas = document.getElementById('circuitCanvas');
+    const circuitCtx = circuitCanvas.getContext('2d');
+    let circuitNodes = [];
+    let canvasWidth = window.innerWidth;
+    let canvasHeight = window.innerHeight;
 
-    // Application State
-    let participantData = {
-      nama: "",
-      ic: "",
-      email: "",
-      skor: 3,
-      rating: 5,
-      serialNo: "JANM-BPAD/KM2026/0001"
+    function resizeCircuitCanvas() {
+      canvasWidth = window.innerWidth;
+      canvasHeight = window.innerHeight;
+      circuitCanvas.width = canvasWidth;
+      circuitCanvas.height = canvasHeight;
+      initCircuitNodes();
+    }
+
+    function initCircuitNodes() {
+      circuitNodes = [];
+      const nodeCount = Math.floor((canvasWidth * canvasHeight) / 28000);
+      for (let i = 0; i < nodeCount; i++) {
+        circuitNodes.push({
+          x: Math.random() * canvasWidth,
+          y: Math.random() * canvasHeight,
+          vx: (Math.random() - 0.5) * 0.45,
+          vy: (Math.random() - 0.5) * 0.45,
+          radius: Math.random() * 2 + 1.2,
+          pulse: Math.random() * Math.PI * 2
+        });
+      }
+    }
+
+    function renderCircuitAnimation() {
+      circuitCtx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+      for (let i = 0; i < circuitNodes.length; i++) {
+        const n1 = circuitNodes[i];
+        n1.x += n1.vx;
+        n1.y += n1.vy;
+        n1.pulse += 0.03;
+
+        if (n1.x < 0) n1.x = canvasWidth;
+        if (n1.x > canvasWidth) n1.x = 0;
+        if (n1.y < 0) n1.y = canvasHeight;
+        if (n1.y > canvasHeight) n1.y = 0;
+
+        const glow = Math.sin(n1.pulse) * 0.3 + 0.7;
+        circuitCtx.beginPath();
+        circuitCtx.arc(n1.x, n1.y, n1.radius, 0, Math.PI * 2);
+        circuitCtx.fillStyle = `rgba(56, 189, 248, ${glow * 0.6})`;
+        circuitCtx.fill();
+
+        for (let j = i + 1; j < circuitNodes.length; j++) {
+          const n2 = circuitNodes[j];
+          const dist = Math.hypot(n1.x - n2.x, n1.y - n2.y);
+          if (dist < 130) {
+            circuitCtx.beginPath();
+            circuitCtx.moveTo(n1.x, n1.y);
+            if (dist > 70) {
+              circuitCtx.lineTo(n2.x, n1.y);
+            }
+            circuitCtx.lineTo(n2.x, n2.y);
+            circuitCtx.strokeStyle = `rgba(14, 165, 233, ${(1 - dist / 130) * 0.16})`;
+            circuitCtx.lineWidth = 0.8;
+            circuitCtx.stroke();
+          }
+        }
+      }
+
+      requestAnimationFrame(renderCircuitAnimation);
+    }
+
+    window.addEventListener('resize', resizeCircuitCanvas);
+    resizeCircuitCanvas();
+    renderCircuitAnimation();
+
+    const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbz46CPAdgKcF-zBa4QwDMbReUt-X9TW4BEK64oq6apN3maR4zaxQEv-HNHL9YQGeKxYGA/exec";
+
+    // Papan pemuka tulen masa nyata (Dipacu 100% daripada Google Sheets)
+    let boothDashboardState = {
+      visitorsCount: 0,
+      quizPassCount: 0,
+      certsCount: 0,
+      totalRatingsSum: 0,
+      ratingsCount: 0
     };
 
-    let adminTapCount = 0;
-    let selectedRating = 5;
+    let nextCertificateSerial = "JANM-BPAD/KM2026/0001";
+    let isFetchingLiveStats = false;
 
-    // KM Question Bank
-    const kmQuestions = [
+    function fetchLiveDashboardStats() {
+      if (isFetchingLiveStats) return;
+      isFetchingLiveStats = true;
+
+      const gasUrl = localStorage.getItem('janm_km_gas_url') || DEFAULT_GAS_URL;
+      if (!gasUrl) {
+        isFetchingLiveStats = false;
+        return;
+      }
+
+      const callbackName = "janm_cb_" + Math.floor(Math.random() * 1000000);
+      const scriptUrl = `${gasUrl}?getMetrics=true&callback=${callbackName}&t=${Date.now()}`;
+
+      window[callbackName] = function(metrics) {
+        try {
+          if (metrics && (metrics.status === "success" || typeof metrics.visitorsCount !== 'undefined')) {
+            const oldVisitors = boothDashboardState.visitorsCount;
+            const oldPass = boothDashboardState.quizPassCount;
+            const oldCerts = boothDashboardState.certsCount;
+
+            boothDashboardState.visitorsCount = Number(metrics.visitorsCount) || 0;
+            boothDashboardState.quizPassCount = Number(metrics.quizPassCount) || 0;
+            boothDashboardState.certsCount = Number(metrics.certsCount) || 0;
+            boothDashboardState.ratingsCount = Number(metrics.ratingsCount) || 0;
+            boothDashboardState.totalRatingsSum = Number(metrics.totalRatingsSum) || 0;
+            
+            if (metrics.nextCertNumber) {
+              nextCertificateSerial = metrics.nextCertNumber;
+            }
+
+            if (metrics.recentActivities && metrics.recentActivities.length > 0) {
+              updateLiveFeedTicker(metrics.recentActivities[0].text);
+            }
+
+            updateDashboardUI(oldVisitors, oldPass, oldCerts);
+            setLiveSyncStatus(true);
+          }
+        } finally {
+          isFetchingLiveStats = false;
+          delete window[callbackName];
+          const el = document.getElementById(callbackName);
+          if (el) el.remove();
+        }
+      };
+
+      const script = document.createElement('script');
+      script.id = callbackName;
+      script.src = scriptUrl;
+      script.onerror = function() {
+        delete window[callbackName];
+        script.remove();
+        isFetchingLiveStats = false;
+        fetchFallback(gasUrl);
+      };
+      document.body.appendChild(script);
+    }
+
+    async function fetchFallback(gasUrl) {
+      try {
+        const fetchUrl = `${gasUrl}?getMetrics=true&t=${Date.now()}`;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 6000);
+
+        const response = await fetch(fetchUrl, { 
+          cache: 'no-store',
+          signal: controller.signal 
+        });
+        clearTimeout(timeoutId);
+
+        if (response.ok) {
+          const metrics = await response.json();
+          if (metrics && (metrics.status === "success" || typeof metrics.visitorsCount !== 'undefined')) {
+            const oldVisitors = boothDashboardState.visitorsCount;
+            const oldPass = boothDashboardState.quizPassCount;
+            const oldCerts = boothDashboardState.certsCount;
+
+            boothDashboardState.visitorsCount = Number(metrics.visitorsCount) || 0;
+            boothDashboardState.quizPassCount = Number(metrics.quizPassCount) || 0;
+            boothDashboardState.certsCount = Number(metrics.certsCount) || 0;
+            boothDashboardState.ratingsCount = Number(metrics.ratingsCount) || 0;
+            boothDashboardState.totalRatingsSum = Number(metrics.totalRatingsSum) || 0;
+
+            if (metrics.nextCertNumber) {
+              nextCertificateSerial = metrics.nextCertNumber;
+            }
+
+            if (metrics.recentActivities && metrics.recentActivities.length > 0) {
+              updateLiveFeedTicker(metrics.recentActivities[0].text);
+            }
+
+            updateDashboardUI(oldVisitors, oldPass, oldCerts);
+            setLiveSyncStatus(true);
+          }
+        }
+      } catch (err) {
+        setLiveSyncStatus(false);
+      }
+    }
+
+    function setLiveSyncStatus(online) {
+      const badge = document.getElementById('syncStatusBadge');
+      if (badge) {
+        if (online) {
+          badge.innerText = "Awan: Bersambung (3s)";
+          badge.className = "text-[11px] px-2.5 py-0.5 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-500/40";
+        } else {
+          badge.innerText = "Menyelaras...";
+          badge.className = "text-[11px] px-2.5 py-0.5 rounded-full bg-amber-950 text-amber-300 border border-amber-500/40";
+        }
+      }
+    }
+
+    function updateLiveFeedTicker(activityText) {
+      const ticker = document.getElementById('liveFeedTicker');
+      if (ticker && activityText) {
+        ticker.innerText = activityText;
+      }
+    }
+
+    function animateValue(element, start, end, duration = 800) {
+      if (!element) return;
+      if (start === end) {
+        element.innerText = end;
+        return;
+      }
+      const range = end - start;
+      const minTimer = 30;
+      let stepTime = Math.abs(Math.floor(duration / range));
+      stepTime = Math.max(stepTime, minTimer);
+      const startTime = performance.now();
+
+      function update(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const currentVal = Math.floor(start + range * progress);
+        element.innerText = currentVal;
+        if (progress < 1) {
+          requestAnimationFrame(update);
+        } else {
+          element.innerText = end;
+        }
+      }
+      requestAnimationFrame(update);
+    }
+
+    function updateDashboardUI(prevVisitors = 0, prevPass = 0, prevCerts = 0) {
+      const vEl = document.getElementById('statVisitorsCount');
+      if (vEl) animateValue(vEl, prevVisitors, boothDashboardState.visitorsCount);
+      const mV = document.getElementById('modalVisitors');
+      if (mV) mV.innerText = boothDashboardState.visitorsCount;
+
+      const qEl = document.getElementById('statQuizPassCount');
+      if (qEl) animateValue(qEl, prevPass, boothDashboardState.quizPassCount);
+      const mQ = document.getElementById('modalQuizPass');
+      if (mQ) mQ.innerText = boothDashboardState.quizPassCount;
+
+      const quizPct = boothDashboardState.visitorsCount > 0 
+        ? Math.round((boothDashboardState.quizPassCount / boothDashboardState.visitorsCount) * 100) 
+        : 0;
+      const qBar = document.getElementById('statQuizPercentBar');
+      if (qBar) qBar.style.width = `${Math.min(quizPct, 100)}%`;
+      const qTxt = document.getElementById('statQuizPercentText');
+      if (qTxt) qTxt.innerText = `${quizPct}% Skor Penuh (3/3)`;
+
+      const cEl = document.getElementById('statCertCount');
+      if (cEl) animateValue(cEl, prevCerts, boothDashboardState.certsCount);
+      const mC = document.getElementById('modalCerts');
+      if (mC) mC.innerText = boothDashboardState.certsCount;
+
+      const certPct = boothDashboardState.visitorsCount > 0 
+        ? Math.round((boothDashboardState.certsCount / boothDashboardState.visitorsCount) * 100) 
+        : 0;
+      const cBar = document.getElementById('statCertPercentBar');
+      if (cBar) cBar.style.width = `${Math.min(certPct, 100)}%`;
+
+      const avg = boothDashboardState.ratingsCount > 0 
+        ? (boothDashboardState.totalRatingsSum / boothDashboardState.ratingsCount).toFixed(2) 
+        : "0.0";
+      const rEl = document.getElementById('statAvgRating');
+      if (rEl) rEl.innerText = avg;
+      const mR = document.getElementById('modalRating');
+      if (mR) mR.innerText = `${avg} / 5.0`;
+      const rCountTxt = document.getElementById('statRatingCountText');
+      if (rCountTxt) rCountTxt.innerText = `${boothDashboardState.ratingsCount} Ulasan Diterima`;
+
+      const starsDisplay = document.getElementById('statAvgStarsDisplay');
+      if (starsDisplay) {
+        const numAvg = parseFloat(avg);
+        let starHtml = '';
+        for (let s = 1; s <= 5; s++) {
+          if (numAvg >= s) {
+            starHtml += '<i class="fa-solid fa-star"></i>';
+          } else if (numAvg >= s - 0.5) {
+            starHtml += '<i class="fa-solid fa-star-half-stroke"></i>';
+          } else {
+            starHtml += '<i class="fa-regular fa-star"></i>';
+          }
+        }
+        starsDisplay.innerHTML = starHtml;
+      }
+    }
+
+    function toggleDashboardModal() {
+      const modal = document.getElementById('dashboardModal');
+      if (modal) {
+        modal.classList.toggle('hidden');
+        if (!modal.classList.contains('hidden')) {
+          fetchLiveDashboardStats();
+        }
+      }
+    }
+
+    let adminTapCount = 0;
+    let adminTapTimer = null;
+    const ADMIN_VALID_PINS = ["2026", "bpad2026"];
+
+    function handleAdminSecretTap() {
+      adminTapCount++;
+      clearTimeout(adminTapTimer);
+      adminTapTimer = setTimeout(() => { adminTapCount = 0; }, 1800);
+
+      if (adminTapCount >= 5) {
+        adminTapCount = 0;
+        openAdminPinModal();
+      }
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if (e.ctrlKey && e.shiftKey && (e.key === 'R' || e.key === 'r')) {
+        e.preventDefault();
+        openAdminPinModal();
+      }
+    });
+
+    function openAdminPinModal() {
+      const pinModal = document.getElementById('adminPinModal');
+      const pinInput = document.getElementById('adminPinInput');
+      const pinErr = document.getElementById('adminPinError');
+      if (pinModal && pinInput) {
+        pinInput.value = "";
+        if (pinErr) pinErr.classList.add('hidden');
+        pinModal.classList.remove('hidden');
+        setTimeout(() => pinInput.focus(), 150);
+      }
+    }
+
+    function closeAdminPinModal() {
+      const pinModal = document.getElementById('adminPinModal');
+      if (pinModal) pinModal.classList.add('hidden');
+    }
+
+    function verifyAdminPinAndProceed() {
+      const pinInput = document.getElementById('adminPinInput');
+      const pinErr = document.getElementById('adminPinError');
+      const enteredPin = (pinInput ? pinInput.value : "").trim().toLowerCase();
+
+      if (ADMIN_VALID_PINS.includes(enteredPin)) {
+        closeAdminPinModal();
+        openResetConfirmModal();
+      } else {
+        if (pinErr) pinErr.classList.remove('hidden');
+        if (pinInput) {
+          pinInput.classList.add('border-rose-500');
+          pinInput.focus();
+        }
+      }
+    }
+
+    function openResetConfirmModal() {
+      document.getElementById('resetConfirmModal').classList.remove('hidden');
+    }
+    function closeResetConfirmModal() {
+      document.getElementById('resetConfirmModal').classList.add('hidden');
+    }
+
+    async function executeResetDashboard() {
+      const pinInput = document.getElementById('adminPinInput');
+      const enteredPin = (pinInput ? pinInput.value : "").trim().toLowerCase() || "2026";
+      const webhookUrl = localStorage.getItem('janm_km_gas_url') || DEFAULT_GAS_URL;
+
+      boothDashboardState = {
+        visitorsCount: 0,
+        quizPassCount: 0,
+        certsCount: 0,
+        totalRatingsSum: 0,
+        ratingsCount: 0
+      };
+      updateDashboardUI();
+      closeResetConfirmModal();
+
+      if (webhookUrl) {
+        try {
+          fetch(webhookUrl, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({
+              action: "RESET_METRICS",
+              adminPin: enteredPin
+            })
+          }).then(() => {
+            setTimeout(fetchLiveDashboardStats, 1000);
+          });
+        } catch (e) {}
+      }
+
+      showToast("Papan Pemuka Direset", "Semua data metrik telah dikembalikan kepada 0.", "fa-rotate-left");
+    }
+
+    const audioElement = document.getElementById('bgAudioPlayer');
+    let isMusicPlaying = false;
+
+    function enterAppAndPlayMusic() {
+      const webhookUrl = localStorage.getItem('janm_km_gas_url') || DEFAULT_GAS_URL;
+      if (webhookUrl) {
+        fetch(webhookUrl, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ action: "LOG_VISITOR" })
+        }).then(() => {
+          setTimeout(fetchLiveDashboardStats, 800);
+        }).catch(() => {});
+      }
+
+      playBackgroundAudio();
+
+      const welcome = document.getElementById('welcomeScreen');
+      const workflow = document.getElementById('mainWorkflowContainer');
+
+      welcome.classList.add('opacity-0', 'scale-95');
+      setTimeout(() => {
+        welcome.classList.add('hidden');
+        workflow.classList.remove('hidden');
+        updateProgressIndicators(1);
+        renderDynamicShuffledQuiz();
+        window.scrollTo({ top: 100, behavior: 'smooth' });
+        showToast("Selamat Datang!", "Lagu dimainkan. Sila lengkapkan maklumat anda.", "fa-music");
+      }, 250);
+    }
+
+    function toggleBackgroundMusic() {
+      if (!isMusicPlaying) {
+        playBackgroundAudio();
+      } else {
+        pauseBackgroundAudio();
+      }
+    }
+
+    function playBackgroundAudio() {
+      audioElement.play().then(() => {
+        isMusicPlaying = true;
+        updateAudioUi(true);
+      }).catch(err => {
+        console.warn("Autoplay memerlukan klik pengguna:", err);
+      });
+    }
+
+    function pauseBackgroundAudio() {
+      audioElement.pause();
+      isMusicPlaying = false;
+      updateAudioUi(false);
+    }
+
+    function updateAudioUi(playing) {
+      const icon = document.getElementById('audioIcon');
+      const text = document.getElementById('audioStatusText');
+      if (playing) {
+        icon.className = "fa-solid fa-volume-high text-emerald-400";
+        text.innerText = "Lagu: Aktif";
+      } else {
+        icon.className = "fa-solid fa-volume-xmark text-slate-400";
+        text.innerText = "Lagu: Henti";
+      }
+    }
+
+    const participantData = {
+      name: "",
+      email: "",
+      idNumber: "",
+      organization: "",
+      category: "Warga JANM / Kem Kewangan",
+      certNumber: "",
+      dateGenerated: "28 September 2026",
+      allQuizCorrect: false,
+      prizeCategoryWon: "Kategori 1",
+      rating: 0,
+      feedback: ""
+    };
+
+    const kmQuestionBank = [
       {
-        q: "Apakah matlamat utama pembudayaan Knowledge Management (KM) di JANM?",
+        id: "kmQuiz1",
+        numberText: "Soalan 1",
+        question: "Apakah faedah utama pembudayaan amalan Knowledge Management (KM) di JANM?",
         options: [
-          "Meningkatkan perkongsian amalan terbaik dan ketelusan audit",
-          "Menambah bilangan dokumen bercetak",
-          "Mengisytiharkan peruntukan kewangan sahaja",
-          "Menghapuskan penggunaan sistem komputer"
-        ],
-        answer: 0
+          { text: "Berkongsi kepakaran dan amalan terbaik agar kerja audit lebih lancar, seragam dan berimpak tinggi", isCorrect: true },
+          { text: "Menyimpan semua dapatan dan panduan kerja secara individu tanpa dikongsi bersama rakan sekerja", isCorrect: false },
+          { text: "Menambah prosedur manual yang berulang-ulang bagi melambatkan proses pelaporan pengurusan", isCorrect: false }
+        ]
       },
       {
-        q: "Manakah antara berikut merupakan bentuk ilmu asas dalam KM?",
+        id: "kmQuiz2",
+        numberText: "Soalan 2",
+        question: "Apakah dua (2) bentuk ilmu pengetahuan asas dalam kerangka Knowledge Management?",
         options: [
-          "Tacit dan Explicit",
-          "Manual dan Digital",
-          "Dalaman dan Luaran",
-          "Audit dan Kewangan"
-        ],
-        answer: 0
+          { text: "Ilmu Tersirat (Tacit: pengalaman & kemahiran diri) dan Ilmu Tersurat (Explicit: manual, SOP & sistem)", isCorrect: true },
+          { text: "Ilmu Luaran (External) dan Ilmu Luput (Obsolete)", isCorrect: false },
+          { text: "Ilmu Teori (Theoretical) dan Ilmu Ramalan Semata-mata (Predictive)", isCorrect: false }
+        ]
       },
       {
-        q: "Bahagian Pengurusan Audit Dalam (BPAD) bertanggungjawab dalam...",
+        id: "kmQuiz3",
+        numberText: "Soalan 3",
+        question: "Mengapa perkongsian panduan pengauditan digital dan penemuan lazim di BPAD amat penting?",
         options: [
-          "Memastikan pematuhan, kawalan dalaman dan tadbir urus saksama",
-          "Menguruskan pembayaran gaji sahaja",
-          "Menyedia belanjawan tahunan kementerian",
-          "Menjual perisian perakaunan"
-        ],
-        answer: 0
+          { text: "Memudahkan rujukan cepat, mengelak kesilapan berulang serta memantapkan kawalan dalaman jabatan", isCorrect: true },
+          { text: "Menghentikan semua proses pengauditan dalaman dan pematuhan peraturan kewangan", isCorrect: false },
+          { text: "Menyembunyikan kelemahan tadbir urus perakaunan daripada pengetahuan pihak pengurusan atasan", isCorrect: false }
+        ]
       }
     ];
 
-    // Initialize App
-    window.addEventListener('DOMContentLoaded', () => {
-      renderQuiz();
-      drawWheel();
-      fetchLiveDashboardStats();
-      setInterval(fetchLiveDashboardStats, 3000);
+    function shuffleArray(arr) {
+      const copy = [...arr];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function renderDynamicShuffledQuiz() {
+      const container = document.getElementById('dynamicQuizContainer');
+      if (!container) return;
+      container.innerHTML = "";
+
+      kmQuestionBank.forEach((qItem) => {
+        const shuffledOpts = shuffleArray(qItem.options);
+        const cardHtml = `
+          <div id="quizBlock_${qItem.id}" class="rounded-2xl p-4 border border-slate-700/80 bg-slate-900/60 space-y-3 transition-all duration-200">
+            <div class="quiz-question-box rounded-xl p-3.5 border border-cyan-500/30">
+              <div class="flex items-center gap-2 mb-1">
+                <span class="px-2 py-0.5 rounded bg-cyan-950 text-cyan-300 font-bold text-[10px] tracking-wider border border-cyan-500/40">
+                  ${qItem.numberText.toUpperCase()}
+                </span>
+              </div>
+              <p class="text-xs sm:text-sm font-semibold text-white leading-relaxed">
+                ${qItem.question}
+              </p>
+            </div>
+            <div class="space-y-2">
+              ${shuffledOpts.map((opt) => `
+                <label class="quiz-option-card flex items-start gap-3 p-3 rounded-xl cursor-pointer">
+                  <input type="radio" 
+                         name="${qItem.id}" 
+                         value="${opt.isCorrect ? 'CORRECT' : 'WRONG'}" 
+                         class="mt-0.5 text-cyan-500 focus:ring-cyan-500">
+                  <span class="text-xs text-slate-200 leading-normal">${opt.text}</span>
+                </label>
+              `).join('')}
+            </div>
+          </div>
+        `;
+        container.insertAdjacentHTML('beforeend', cardHtml);
+      });
+    }
+
+    function checkIdDuplicateWithGAS(cleanId) {
+      return new Promise((resolve) => {
+        const gasUrl = localStorage.getItem('janm_km_gas_url') || DEFAULT_GAS_URL;
+        if (!gasUrl) {
+          resolve({ isDuplicate: false, status: 'no_url' });
+          return;
+        }
+
+        const cbName = "janm_chk_" + Math.floor(Math.random() * 1000000);
+        const scriptUrl = `${gasUrl}?checkId=${encodeURIComponent(cleanId)}&callback=${cbName}&t=${Date.now()}`;
+        let isDone = false;
+
+        const timer = setTimeout(() => {
+          if (!isDone) {
+            isDone = true;
+            delete window[cbName];
+            const el = document.getElementById(cbName);
+            if (el) el.remove();
+            resolve({ isDuplicate: false, status: 'timeout' });
+          }
+        }, 5000);
+
+        window[cbName] = function(json) {
+          if (!isDone) {
+            isDone = true;
+            clearTimeout(timer);
+            delete window[cbName];
+            const el = document.getElementById(cbName);
+            if (el) el.remove();
+
+            if (json && json.exists === true) {
+              resolve({ isDuplicate: true, certNumber: json.certNumber || "" });
+            } else {
+              resolve({ isDuplicate: false });
+            }
+          }
+        };
+
+        const script = document.createElement('script');
+        script.id = cbName;
+        script.src = scriptUrl;
+        script.onerror = function() {
+          if (!isDone) {
+            isDone = true;
+            clearTimeout(timer);
+            delete window[cbName];
+            script.remove();
+            resolve({ isDuplicate: false, status: 'network_err' });
+          }
+        };
+        document.body.appendChild(script);
+      });
+    }
+
+    function updateProgressIndicators(step) {
+      const s1 = document.getElementById('stepIndicator1');
+      const s2 = document.getElementById('stepIndicator2');
+      const s3 = document.getElementById('stepIndicator3');
+
+      [s1, s2, s3].forEach(el => {
+        el.className = "py-1.5 rounded-lg font-medium bg-slate-800/60 text-slate-400 border border-transparent";
+      });
+
+      if (step === 1) {
+        s1.className = "py-1.5 rounded-lg font-semibold bg-cyan-600/30 text-cyan-300 border border-cyan-500/50";
+      } else if (step === 2) {
+        s1.className = "py-1.5 rounded-lg font-semibold bg-slate-800 text-slate-300";
+        s2.className = "py-1.5 rounded-lg font-semibold bg-cyan-600/30 text-cyan-300 border border-cyan-500/50";
+      } else if (step === 3) {
+        s1.className = "py-1.5 rounded-lg font-semibold bg-slate-800 text-slate-300";
+        s2.className = "py-1.5 rounded-lg font-semibold bg-slate-800 text-slate-300";
+        s3.className = "py-1.5 rounded-lg font-semibold bg-cyan-600/30 text-cyan-300 border border-cyan-500/50";
+      }
+    }
+
+    async function handleProceedToStep2(e) {
+      e.preventDefault();
+      
+      const nameInput = document.getElementById('fullName').value.trim();
+      const emailInput = document.getElementById('email').value.trim();
+      const idInput = document.getElementById('idNumber').value.trim();
+      const orgInput = document.getElementById('organization').value.trim();
+      const catInput = document.querySelector('input[name="visitorCategory"]:checked');
+
+      if (!nameInput || !emailInput || !idInput || !orgInput) {
+        showToast("Perhatian", "Sila lengkapkan semua ruangan bertanda bintang.", "fa-triangle-exclamation", true);
+        return;
+      }
+
+      if (idInput.length !== 12 || !/^[0-9]{12}$/.test(idInput)) {
+        showToast("No. Kad Pengenalan Tidak Sah", "Sila masukkan tepat 12 digit nombor sahaja.", "fa-triangle-exclamation", true);
+        document.getElementById('idNumber').focus();
+        return;
+      }
+
+      const btnProceed = document.getElementById('btnProceedToStep2');
+      const btnText = document.getElementById('btnProceedText');
+      const originalText = btnText.innerHTML;
+
+      btnProceed.disabled = true;
+      btnText.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i> Menyemak Pendaftaran...`;
+
+      const gasCheck = await checkIdDuplicateWithGAS(idInput);
+      btnProceed.disabled = false;
+      btnText.innerHTML = originalText;
+
+      if (gasCheck.isDuplicate) {
+        showToast("No. KP Telah Wujud", `No. Kad Pengenalan ini telah didaftarkan dalam rekod ${gasCheck.certNumber ? `[${gasCheck.certNumber}]` : ''}. Janaan bertindih tidak dibenarkan.`, "fa-ban", true);
+        document.getElementById('idNumber').focus();
+        return;
+      }
+
+      participantData.name = nameInput.toUpperCase();
+      participantData.email = emailInput;
+      participantData.idNumber = idInput;
+      participantData.organization = orgInput.toUpperCase();
+      participantData.category = catInput ? catInput.value : "Warga JANM / Kem Kewangan";
+
+      document.getElementById('step1Card').classList.add('hidden');
+      document.getElementById('step2Card').classList.remove('hidden');
+      
+      updateProgressIndicators(2);
+      renderDynamicShuffledQuiz();
+      drawWheelCanvas(0);
+      window.scrollTo({ top: 100, behavior: 'smooth' });
+      showToast("Disahkan", "Sila jawab 3 soalan mudah KM di bawah.", "fa-check");
+    }
+
+    function verifyQuizAnswers() {
+      const q1 = document.querySelector('input[name="kmQuiz1"]:checked');
+      const q2 = document.querySelector('input[name="kmQuiz2"]:checked');
+      const q3 = document.querySelector('input[name="kmQuiz3"]:checked');
+
+      if (!q1 || !q2 || !q3) {
+        showToast("Sila Lengkapkan Kuiz", "Sila pilih jawapan bagi kesemua 3 soalan di atas.", "fa-circle-exclamation", true);
+        return;
+      }
+
+      const isQ1Correct = (q1.value === 'CORRECT');
+      const isQ2Correct = (q2.value === 'CORRECT');
+      const isQ3Correct = (q3.value === 'CORRECT');
+
+      const b1 = document.getElementById('quizBlock_kmQuiz1');
+      const b2 = document.getElementById('quizBlock_kmQuiz2');
+      const b3 = document.getElementById('quizBlock_kmQuiz3');
+
+      if (b1) b1.className = isQ1Correct ? "rounded-2xl p-4 border border-emerald-500/60 bg-emerald-950/20 space-y-3" : "rounded-2xl p-4 border border-rose-500/60 bg-rose-950/20 space-y-3";
+      if (b2) b2.className = isQ2Correct ? "rounded-2xl p-4 border border-emerald-500/60 bg-emerald-950/20 space-y-3" : "rounded-2xl p-4 border border-rose-500/60 bg-rose-950/20 space-y-3";
+      if (b3) b3.className = isQ3Correct ? "rounded-2xl p-4 border border-emerald-500/60 bg-emerald-950/20 space-y-3" : "rounded-2xl p-4 border border-rose-500/60 bg-rose-950/20 space-y-3";
+
+      const score = (isQ1Correct ? 1 : 0) + (isQ2Correct ? 1 : 0) + (isQ3Correct ? 1 : 0);
+      const scoreBadge = document.getElementById('quizScoreBadge');
+      scoreBadge.innerText = `Skor: ${score}/3 ${score === 3 ? "✓ Tepat!" : ""}`;
+
+      if (score === 3) {
+        participantData.allQuizCorrect = true;
+        document.getElementById('quizFeedbackMessage').innerHTML = "<span class='text-emerald-400 font-bold'>Semua jawapan betul! Sila putar roda cabutan hadiah di bawah.</span>";
+        document.getElementById('prizeWheelSection').classList.remove('hidden');
+        showToast("Tahniah!", "Semua jawapan betul! Sila putar roda hadiah.", "fa-gift");
+        setTimeout(() => {
+          document.getElementById('prizeWheelSection').scrollIntoView({ behavior: 'smooth' });
+        }, 250);
+      } else {
+        participantData.allQuizCorrect = false;
+        document.getElementById('prizeWheelSection').classList.add('hidden');
+        document.getElementById('quizFeedbackMessage').innerHTML = `<span class='text-amber-300 font-semibold'>Skor anda: ${score}/3. Sila semak soalan bergaris merah untuk mencuba lagi.</span>`;
+        showToast("Cuba Lagi", `Skor anda: ${score}/3. Sila semak jawapan anda.`, "fa-rotate-right", true);
+      }
+    }
+
+    const prizeSlices = [
+      { label: "Kategori 1", color: "#0284c7" },
+      { label: "Kategori 2", color: "#d97706" },
+      { label: "Kategori 3", color: "#0d9488" },
+      { label: "Kategori 4", color: "#7c3aed" },
+      { label: "Kategori 5", color: "#e11d48" }
+    ];
+
+    let wheelCurrentAngle = 0;
+    let isWheelSpinning = false;
+
+    function drawWheelCanvas(currentAngle) {
+      const wheelEl = document.getElementById('wheelCanvas');
+      if (!wheelEl) return;
+      const wCtx = wheelEl.getContext('2d');
+      const size = wheelEl.width;
+      const center = size / 2;
+      const radius = center - 12;
+      const sliceAngle = (Math.PI * 2) / prizeSlices.length;
+
+      wCtx.clearRect(0, 0, size, size);
+
+      for (let i = 0; i < prizeSlices.length; i++) {
+        const start = currentAngle + i * sliceAngle;
+        const end = start + sliceAngle;
+
+        wCtx.beginPath();
+        wCtx.moveTo(center, center);
+        wCtx.arc(center, center, radius, start, end);
+        wCtx.closePath();
+        wCtx.fillStyle = prizeSlices[i].color;
+        wCtx.fill();
+        wCtx.strokeStyle = "#08152c";
+        wCtx.lineWidth = 3;
+        wCtx.stroke();
+
+        wCtx.save();
+        wCtx.translate(center, center);
+        wCtx.rotate(start + sliceAngle / 2);
+        wCtx.textAlign = "right";
+        wCtx.fillStyle = "#ffffff";
+        wCtx.font = "bold 13px 'Plus Jakarta Sans', sans-serif";
+        wCtx.fillText(prizeSlices[i].label, radius - 20, 5);
+        wCtx.restore();
+      }
+
+      // Gegelung Luar Bercahaya (Glow Ring)
+      wCtx.beginPath();
+      wCtx.arc(center, center, radius, 0, Math.PI * 2);
+      wCtx.strokeStyle = "rgba(56, 189, 248, 0.6)";
+      wCtx.lineWidth = 4;
+      wCtx.stroke();
+
+      // Titik Tengah Cyber
+      wCtx.beginPath();
+      wCtx.arc(center, center, 26, 0, Math.PI * 2);
+      wCtx.fillStyle = "#030a16";
+      wCtx.fill();
+      wCtx.strokeStyle = "#38bdf8";
+      wCtx.lineWidth = 4;
+      wCtx.stroke();
+
+      wCtx.fillStyle = "#38bdf8";
+      wCtx.font = "bold 10px 'Plus Jakarta Sans', sans-serif";
+      wCtx.textAlign = "center";
+      wCtx.textBaseline = "middle";
+      wCtx.fillText("BPAD", center, center);
+    }
+
+    function spinPrizeWheel() {
+      if (isWheelSpinning) return;
+      isWheelSpinning = true;
+
+      const spinBtn = document.getElementById('spinWheelBtn');
+      spinBtn.disabled = true;
+      spinBtn.innerText = "Roda Sedang Berputar...";
+
+      const prizeIndex = Math.floor(Math.random() * prizeSlices.length);
+      const chosenPrize = prizeSlices[prizeIndex];
+
+      const sliceAngle = (Math.PI * 2) / prizeSlices.length;
+      const targetSectorMiddle = -(Math.PI / 2) - (prizeIndex * sliceAngle + sliceAngle / 2);
+      const extraRounds = Math.PI * 2 * (5 + Math.floor(Math.random() * 3));
+      const finalAngle = targetSectorMiddle + extraRounds;
+      const startAngle = wheelCurrentAngle % (Math.PI * 2);
+
+      const duration = 4000;
+      const startTime = performance.now();
+
+      function easeOutCubic(t) {
+        return 1 - Math.pow(1 - t, 3);
+      }
+
+      function animateWheel(now) {
+        const elapsed = now - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const currentProgressAngle = startAngle + (finalAngle - startAngle) * easeOutCubic(progress);
+        
+        drawWheelCanvas(currentProgressAngle);
+
+        if (progress < 1) {
+          requestAnimationFrame(animateWheel);
+        } else {
+          wheelCurrentAngle = currentProgressAngle;
+          isWheelSpinning = false;
+          spinBtn.disabled = false;
+          spinBtn.innerText = "Putar Semula Jika Perlu";
+
+          participantData.prizeCategoryWon = chosenPrize.label;
+
+          document.getElementById('prizeCategoryBadge').innerText = `★ ${chosenPrize.label.toUpperCase()} ★`;
+          document.getElementById('prizeCategoryText').innerText = chosenPrize.label;
+          document.getElementById('prizeWonBox').classList.remove('hidden');
+
+          if (typeof confetti === 'function') {
+            confetti({ 
+              particleCount: 100, 
+              spread: 80, 
+              origin: { y: 0.6 },
+              colors: ['#38bdf8', '#f59e0b', '#10b981', '#ffffff'] 
+            });
+          }
+          showToast("Tahniah!", `Anda memenangi ${chosenPrize.label}! Sila tuntut di kaunter urusetia.`, "fa-trophy");
+        }
+      }
+
+      requestAnimationFrame(animateWheel);
+    }
+
+    function setRating(ratingValue) {
+      participantData.rating = ratingValue;
+      const stars = document.querySelectorAll('#starRatingContainer .star-btn');
+      stars.forEach((btn, index) => {
+        if (index < ratingValue) {
+          btn.className = "star-btn text-amber-400 text-lg transition-colors";
+        } else {
+          btn.className = "star-btn text-slate-600 text-lg transition-colors";
+        }
+      });
+
+      const labelMap = {
+        1: "Boleh diperbaiki",
+        2: "Sederhana",
+        3: "Memuaskan",
+        4: "Baik",
+        5: "Sangat Baik! ⭐⭐⭐⭐⭐"
+      };
+      document.getElementById('ratingFeedbackText').innerText = labelMap[ratingValue] || "Terima kasih!";
+      document.getElementById('ratingFeedbackText').className = "text-xs text-amber-400 font-medium ml-2";
+    }
+
+    function safeGetImage(elementId, fallbackSrc) {
+      return new Promise((resolve) => {
+        const existingImg = document.getElementById(elementId);
+        if (existingImg && existingImg.complete && existingImg.naturalWidth > 0) {
+          resolve(existingImg);
+          return;
+        }
+        const img = new Image();
+        let isDone = false;
+        img.onload = () => { if (!isDone) { isDone = true; resolve(img); } };
+        img.onerror = () => { if (!isDone) { isDone = true; resolve(null); } };
+        img.src = fallbackSrc;
+        setTimeout(() => { if (!isDone) { isDone = true; resolve(null); } }, 350);
+      });
+    }
+
+    function handleGenerateCertificate() {
+      if (!participantData.allQuizCorrect) {
+        showToast("Perhatian", "Sila selesaikan 3 soalan kuiz terlebih dahulu.", "fa-circle-exclamation", true);
+        return;
+      }
+
+      if (!participantData.rating || participantData.rating === 0) {
+        showToast("Penilaian Wajib", "Sila berikan penilaian bintang untuk booth BPAD sebelum menjana sijil.", "fa-star", true);
+        const container = document.getElementById('starRatingContainer');
+        if (container) container.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+
+      participantData.feedback = document.getElementById('visitorFeedback').value.trim();
+      participantData.certNumber = nextCertificateSerial || `JANM-BPAD/KM2026/${Math.floor(1000 + Math.random() * 9000)}`;
+
+      const webhookUrl = localStorage.getItem('janm_km_gas_url') || DEFAULT_GAS_URL;
+      if (webhookUrl) {
+        fetch(webhookUrl, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({
+            action: "SAVE_PARTICIPANT",
+            name: participantData.name,
+            email: participantData.email,
+            idNumber: participantData.idNumber,
+            organization: participantData.organization,
+            category: participantData.category,
+            certNumber: participantData.certNumber,
+            prizeCategoryWon: participantData.prizeCategoryWon,
+            rating: participantData.rating,
+            feedback: participantData.feedback,
+            allQuizCorrect: participantData.allQuizCorrect
+          })
+        }).then(() => {
+          setTimeout(fetchLiveDashboardStats, 1000);
+        }).catch(() => {});
+      }
+
+      document.getElementById('step2Card').classList.add('hidden');
+      document.getElementById('step3Card').classList.remove('hidden');
+      updateProgressIndicators(3);
+
+      renderCertificateHD();
+
+      window.scrollTo({ top: 100, behavior: 'smooth' });
+      showToast("Sijil Sedia", "Sijil penghargaan digital anda berjaya dijana.", "fa-award");
+    }
+
+    async function renderCertificateHD() {
+      const certCanvas = document.getElementById('certificateCanvas');
+      if (!certCanvas) return;
+      const cCtx = certCanvas.getContext('2d');
+      const w = certCanvas.width;
+      const h = certCanvas.height;
+
+      // 1. LATAR BELAKANG ELEKTRIK SIBER HIDUP (Pelan Strategik JANM 2026-2030, ms 4 & 20)
+      const bgGrad = cCtx.createRadialGradient(w / 2, h / 2 - 60, 60, w / 2, h / 2, w * 0.72);
+      bgGrad.addColorStop(0, "#0e3a75");
+      bgGrad.addColorStop(0.4, "#092552");
+      bgGrad.addColorStop(0.75, "#061838");
+      bgGrad.addColorStop(1, "#030c1e");
+      cCtx.fillStyle = bgGrad;
+      cCtx.fillRect(0, 0, w, h);
+
+      // Grid Halus Berteknologi AI
+      cCtx.strokeStyle = "rgba(56, 189, 248, 0.08)";
+      cCtx.lineWidth = 1;
+      for (let x = 60; x < w; x += 60) {
+        cCtx.beginPath();
+        cCtx.moveTo(x, 0);
+        cCtx.lineTo(x, h);
+        cCtx.stroke();
+      }
+      for (let y = 60; y < h; y += 60) {
+        cCtx.beginPath();
+        cCtx.moveTo(0, y);
+        cCtx.lineTo(w, y);
+        cCtx.stroke();
+      }
+
+      // 2. CORAK LITAR TEGAK PERSIS KULIT PELAN STRATEGIK JANM (Halaman 4, 20 & 36)
+      cCtx.save();
+      cCtx.strokeStyle = "rgba(56, 189, 248, 0.4)";
+      cCtx.fillStyle = "rgba(56, 189, 248, 0.85)";
+      cCtx.lineWidth = 2.5;
+
+      const circuitBuses = [
+        [160, 110, 160, 480, 220, 540],
+        [240, 90, 240, 360, 280, 400],
+        [320, 120, 320, 300],
+        [w - 160, 110, w - 160, 480, w - 220, 540],
+        [w - 240, 90, w - 240, 360, w - 280, 400],
+        [w - 320, 120, w - 320, 300]
+      ];
+
+      circuitBuses.forEach(trace => {
+        cCtx.beginPath();
+        cCtx.moveTo(trace[0], trace[1]);
+        for (let i = 2; i < trace.length; i += 2) {
+          cCtx.lineTo(trace[i], trace[i + 1]);
+        }
+        cCtx.stroke();
+
+        const endX = trace[trace.length - 2];
+        const endY = trace[trace.length - 1];
+        cCtx.beginPath();
+        cCtx.arc(endX, endY, 6, 0, Math.PI * 2);
+        cCtx.fill();
+
+        cCtx.beginPath();
+        cCtx.arc(endX, endY, 12, 0, Math.PI * 2);
+        cCtx.strokeStyle = "rgba(56, 189, 248, 0.7)";
+        cCtx.lineWidth = 1.5;
+        cCtx.stroke();
+      });
+      cCtx.restore();
+
+      // 3. BUCU PEPENJURU SIBER DI SUDUT BAWAH KIRI (Signature Diagonal dari Pelan Strategik JANM)
+      cCtx.save();
+      cCtx.beginPath();
+      cCtx.moveTo(0, h - 340);
+      cCtx.lineTo(240, h - 100);
+      cCtx.lineTo(420, h - 100);
+      cCtx.lineTo(540, h);
+      cCtx.lineTo(0, h);
+      cCtx.closePath();
+      cCtx.fillStyle = "#0c1533";
+      cCtx.fill();
+
+      // Jalur Perak Neon Bersinar
+      cCtx.beginPath();
+      cCtx.moveTo(0, h - 340);
+      cCtx.lineTo(240, h - 100);
+      cCtx.lineTo(420, h - 100);
+      cCtx.lineTo(540, h);
+      cCtx.strokeStyle = "#38bdf8";
+      cCtx.lineWidth = 4;
+      cCtx.stroke();
+
+      // Suar Cahaya Bucu (Flare Spark)
+      [[240, h - 100], [420, h - 100]].forEach(([fx, fy]) => {
+        const flareGrad = cCtx.createRadialGradient(fx, fy, 1, fx, fy, 16);
+        flareGrad.addColorStop(0, "#ffffff");
+        flareGrad.addColorStop(0.3, "#38bdf8");
+        flareGrad.addColorStop(1, "rgba(56, 189, 248, 0)");
+        cCtx.fillStyle = flareGrad;
+        cCtx.beginPath();
+        cCtx.arc(fx, fy, 16, 0, Math.PI * 2);
+        cCtx.fill();
+      });
+      cCtx.restore();
+
+      // 4. BINGKAI EMAS DIRAJA & KURUNGAN SUDUT TEKNOLOGI TINGGI
+      cCtx.strokeStyle = "rgba(56, 189, 248, 0.35)";
+      cCtx.lineWidth = 2;
+      cCtx.strokeRect(30, 30, w - 60, h - 60);
+
+      const goldBorderGrad = cCtx.createLinearGradient(0, 0, w, h);
+      goldBorderGrad.addColorStop(0, "#f59e0b");
+      goldBorderGrad.addColorStop(0.3, "#fef08a");
+      goldBorderGrad.addColorStop(0.7, "#d97706");
+      goldBorderGrad.addColorStop(1, "#b45309");
+      cCtx.strokeStyle = goldBorderGrad;
+      cCtx.lineWidth = 5;
+      cCtx.strokeRect(46, 46, w - 92, h - 92);
+
+      const bCorner = 36;
+      cCtx.fillStyle = "#f59e0b";
+      [[50, 50], [w - 50 - bCorner, 50], [50, h - 50 - bCorner], [w - 50 - bCorner, h - 50 - bCorner]].forEach(([cx, cy]) => {
+        cCtx.fillRect(cx, cy, bCorner, 4);
+        cCtx.fillRect(cx, cy, 4, bCorner);
+      });
+
+      // 5. TEKS PENGEPALA KORPORAT
+      cCtx.textAlign = "center";
+      cCtx.fillStyle = "#cbd5e1";
+      cCtx.font = "600 18px 'Plus Jakarta Sans', sans-serif";
+      cCtx.fillText("JABATAN AKAUNTAN NEGARA MALAYSIA", w / 2, 230);
+
+      cCtx.fillStyle = "#38bdf8";
+      cCtx.font = "700 16px 'Space Grotesk', sans-serif";
+      cCtx.fillText("BAHAGIAN PENGURUSAN AUDIT DALAM (BPAD)", w / 2, 260);
+
+      // TAJUK SIJIL PENGHARGAAN EMAS
+      cCtx.save();
+      cCtx.shadowColor = "rgba(245, 158, 11, 0.4)";
+      cCtx.shadowBlur = 18;
+      const titleGrad = cCtx.createLinearGradient(w / 2 - 250, 0, w / 2 + 250, 0);
+      titleGrad.addColorStop(0, "#fef08a");
+      titleGrad.addColorStop(0.5, "#ffffff");
+      titleGrad.addColorStop(1, "#f59e0b");
+      cCtx.fillStyle = titleGrad;
+      cCtx.font = "900 50px 'Cinzel', serif";
+      cCtx.fillText("SIJIL PENGHARGAAN", w / 2, 348);
+      cCtx.restore();
+
+      const lineGrad = cCtx.createLinearGradient(w / 2 - 260, 0, w / 2 + 260, 0);
+      lineGrad.addColorStop(0, "rgba(245, 158, 11, 0)");
+      lineGrad.addColorStop(0.5, "rgba(245, 158, 11, 0.95)");
+      lineGrad.addColorStop(1, "rgba(245, 158, 11, 0)");
+      cCtx.fillStyle = lineGrad;
+      cCtx.fillRect(w / 2 - 260, 368, 520, 3);
+
+      cCtx.fillStyle = "#94a3b8";
+      cCtx.font = "italic 400 20px 'Plus Jakarta Sans', sans-serif";
+      cCtx.fillText("Dengan ini diperakui bahawa", w / 2, 420);
+
+      // NAMA PESERTA
+      cCtx.save();
+      cCtx.shadowColor = "rgba(56, 189, 248, 0.35)";
+      cCtx.shadowBlur = 14;
+      cCtx.fillStyle = "#ffffff";
+      cCtx.font = "800 46px 'Plus Jakarta Sans', sans-serif";
+      cCtx.fillText(participantData.name || "NAMA PESERTA", w / 2, 480);
+      cCtx.restore();
+
+      // NOMBOR KAD PENGENALAN (TERUS 12 ANGKA)
+      cCtx.fillStyle = "#38bdf8";
+      cCtx.font = "700 24px 'Space Grotesk', monospace";
+      cCtx.fillText(participantData.idNumber || "000101011234", w / 2, 522);
+
+      // ORGANISASI / BAHAGIAN
+      cCtx.fillStyle = "#94a3b8";
+      cCtx.font = "600 20px 'Plus Jakarta Sans', sans-serif";
+      cCtx.fillText(participantData.organization || "BAHAGIAN PENGURUSAN AUDIT DALAM (BPAD)", w / 2, 558);
+
+      // 6. TEKS PERAKUAN RASMI BPAD
+      cCtx.fillStyle = "#e2e8f0";
+      cCtx.font = "400 21px 'Plus Jakarta Sans', sans-serif";
+      cCtx.fillText("Telah hadir dan menyertai aktiviti di Booth", w / 2, 626);
+      
+      cCtx.fillStyle = "#38bdf8";
+      cCtx.font = "700 22px 'Plus Jakarta Sans', sans-serif";
+      cCtx.fillText("KNOWLEDGE MANAGEMENT BAHAGIAN PENGURUSAN AUDIT DALAM (BPAD)", w / 2, 660);
+
+      cCtx.fillStyle = "#e2e8f0";
+      cCtx.font = "400 20px 'Plus Jakarta Sans', sans-serif";
+      cCtx.fillText("sempena Hari Knowledge Management JANM 2026", w / 2, 698);
+      cCtx.fillText("pada 28 September 2026 bertempat di Lobi Utama, JANM Putrajaya.", w / 2, 732);
+
+      // 7. TANDATANGAN PENGARAH & PENGESAHAN RASMI BPAD
+      cCtx.textAlign = "left";
+      cCtx.fillStyle = "#38bdf8";
+      cCtx.font = "italic 700 20px 'Plus Jakarta Sans', sans-serif";
+      cCtx.fillText("Pengarah", 140, 960);
+      cCtx.fillStyle = "#ffffff";
+      cCtx.font = "600 16px 'Plus Jakarta Sans', sans-serif";
+      cCtx.fillText("Bahagian Pengurusan Audit Dalam", 140, 986);
+      cCtx.fillStyle = "#94a3b8";
+      cCtx.font = "400 14px 'Plus Jakarta Sans', sans-serif";
+      cCtx.fillText("Jabatan Akauntan Negara Malaysia", 140, 1010);
+
+      cCtx.textAlign = "right";
+      cCtx.fillStyle = "#cbd5e1";
+      cCtx.font = "600 15px 'Space Grotesk', monospace";
+      cCtx.fillText(`NO. SIJIL: ${participantData.certNumber || 'JANM-BPAD/KM2026/0001'}`, w - 140, 960);
+      cCtx.fillText(`TARIKH: ${participantData.dateGenerated || '28 September 2026'}`, w - 140, 986);
+      cCtx.fillStyle = "#38bdf8";
+      cCtx.fillText("DIJANA SECARA DIGITAL & SAH", w - 140, 1010);
+
+      // 8. LOGO KEMENTERIAN KEWANGAN JANM (ATAS TENGAH)
+      const imgJata = await safeGetImage('imgJata1', 'Logo Kementerian Kewangan JANM.png') || await safeGetImage('imgJata2', 'JATA NEGARA.png');
+      if (imgJata && imgJata.naturalWidth > 0) {
+        const jWidth = 145;
+        const jHeight = (imgJata.naturalHeight / imgJata.naturalWidth) * jWidth;
+        cCtx.drawImage(imgJata, (w - jWidth) / 2, 60, jWidth, jHeight);
+      } else {
+        cCtx.save();
+        cCtx.fillStyle = "#f59e0b";
+        cCtx.beginPath();
+        cCtx.arc(w / 2, 115, 34, 0, Math.PI * 2);
+        cCtx.fill();
+        cCtx.fillStyle = "#030a16";
+        cCtx.font = "bold 13px 'Plus Jakarta Sans', sans-serif";
+        cCtx.textAlign = "center";
+        cCtx.fillText("JANM", w / 2, 120);
+        cCtx.restore();
+      }
+
+      // 9. LOGO 80 TAHUN JANM (BAWAH TENGAH)
+      const img80 = await safeGetImage('imgLogo80', 'Logo 80 Tahun JANM.png');
+      if (img80 && img80.naturalWidth > 0) {
+        const lWidth = 135;
+        const lHeight = (img80.naturalHeight / img80.naturalWidth) * lWidth;
+        cCtx.drawImage(img80, (w - lWidth) / 2, 800, lWidth, lHeight);
+      }
+
+      // 10. KOD QR PENGESAHAN KETULENAN SIJIL DENGAN SISTEM KESELAMATAN SANDARAN VEKTOR
+      const qrBoxX = w - 240;
+      const qrBoxY = 830;
+      const qrBoxSize = 96;
+
+      function renderFallbackBadge() {
+        cCtx.save();
+        cCtx.fillStyle = "#091a38";
+        cCtx.fillRect(qrBoxX, qrBoxY, qrBoxSize, qrBoxSize);
+        cCtx.strokeStyle = "#38bdf8";
+        cCtx.lineWidth = 1.5;
+        cCtx.strokeRect(qrBoxX, qrBoxY, qrBoxSize, qrBoxSize);
+
+        cCtx.strokeStyle = "#f59e0b";
+        cCtx.lineWidth = 2;
+        cCtx.beginPath();
+        cCtx.arc(qrBoxX + qrBoxSize / 2, qrBoxY + 38, 22, 0, Math.PI * 2);
+        cCtx.stroke();
+
+        cCtx.fillStyle = "#f59e0b";
+        cCtx.font = "bold 18px 'Space Grotesk', sans-serif";
+        cCtx.textAlign = "center";
+        cCtx.fillText("✓", qrBoxX + qrBoxSize / 2, qrBoxY + 44);
+
+        cCtx.fillStyle = "#38bdf8";
+        cCtx.font = "bold 9px 'Space Grotesk', sans-serif";
+        cCtx.fillText("BPAD VERIFIED", qrBoxX + qrBoxSize / 2, qrBoxY + 74);
+        cCtx.fillStyle = "#94a3b8";
+        cCtx.font = "8px 'Space Grotesk', sans-serif";
+        cCtx.fillText("SECURE DIGITAL", qrBoxX + qrBoxSize / 2, qrBoxY + 86);
+        cCtx.restore();
+      }
+
+      try {
+        const qrVerificationText = `PENGESAHAN SIJIL BPAD JANM 2026\nNo. Sijil: ${participantData.certNumber}\nNama: ${participantData.name}\nNo. KP: ${participantData.idNumber}\nTarikh: ${participantData.dateGenerated}\nStatus: SAH & TULEN`;
+        const qrImgUrl = `https://api.qrserver.com/v1/create-qr-code/?size=100x100&margin=2&data=${encodeURIComponent(qrVerificationText)}`;
+        const qrImage = new Image();
+        qrImage.crossOrigin = "anonymous";
+        let isQrDrawn = false;
+
+        const qrTimeout = setTimeout(() => {
+          if (!isQrDrawn) {
+            isQrDrawn = true;
+            renderFallbackBadge();
+          }
+        }, 1200);
+
+        qrImage.onload = () => {
+          if (!isQrDrawn) {
+            isQrDrawn = true;
+            clearTimeout(qrTimeout);
+            cCtx.save();
+            cCtx.fillStyle = "#ffffff";
+            cCtx.fillRect(qrBoxX, qrBoxY, qrBoxSize, qrBoxSize);
+            cCtx.drawImage(qrImage, qrBoxX + 2, qrBoxY + 2, qrBoxSize - 4, qrBoxSize - 4);
+            cCtx.strokeStyle = "#38bdf8";
+            cCtx.lineWidth = 1.5;
+            cCtx.strokeRect(qrBoxX, qrBoxY, qrBoxSize, qrBoxSize);
+            cCtx.restore();
+          }
+        };
+
+        qrImage.onerror = () => {
+          if (!isQrDrawn) {
+            isQrDrawn = true;
+            clearTimeout(qrTimeout);
+            renderFallbackBadge();
+          }
+        };
+
+        qrImage.src = qrImgUrl;
+      } catch (eQr) {
+        renderFallbackBadge();
+      }
+    }
+
+    function downloadCertificatePng() {
+      const certCanvas = document.getElementById('certificateCanvas');
+      if (!certCanvas) return;
+      const dataUrl = certCanvas.toDataURL("image/png");
+      const link = document.createElement('a');
+      const cleanName = (participantData.name || 'PESERTA').replace(/[^a-zA-Z0-9]/g, '_');
+      link.download = `Sijil_KM_BPAD_${cleanName}.png`;
+      link.href = dataUrl;
+      link.click();
+      showToast("Berjaya", "Sijil PNG berjaya dimuat turun ke peranti anda.", "fa-download");
+    }
+
+    function downloadCertificatePdf() {
+      const certCanvas = document.getElementById('certificateCanvas');
+      if (!certCanvas) return;
+      const dataUrl = certCanvas.toDataURL("image/jpeg", 0.92);
+      
+      if (window.jspdf && window.jspdf.jsPDF) {
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF({
+          orientation: 'landscape',
+          unit: 'px',
+          format: [1600, 1131]
+        });
+        pdf.addImage(dataUrl, 'JPEG', 0, 0, 1600, 1131);
+        const cleanName = (participantData.name || 'PESERTA').replace(/[^a-zA-Z0-9]/g, '_');
+        pdf.save(`Sijil_KM_BPAD_${cleanName}.pdf`);
+        showToast("Berjaya", "Sijil PDF berjaya dimuat turun.", "fa-file-pdf");
+      } else {
+        downloadCertificatePng();
+      }
+    }
+
+    async function handleSendEmailCopy() {
+      const emailBtn = document.getElementById('btnSendEmailCopy');
+      const originalText = emailBtn.innerHTML;
+      
+      const certCanvas = document.getElementById('certificateCanvas');
+      if (!certCanvas) return;
+
+      const webhookUrl = localStorage.getItem('janm_km_gas_url') || DEFAULT_GAS_URL;
+
+      emailBtn.disabled = true;
+      emailBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Menghantar...`;
+      showToast("Menjana PDF...", "Menyediakan salinan PDF sijil untuk dihantar...", "fa-file-pdf");
+
+      try {
+        let pdfBase64 = "";
+        
+        // Mampatan kanvas untuk penghantaran selamat (~180KB)
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = 1200;
+        tempCanvas.height = 848;
+        const tCtx = tempCanvas.getContext('2d');
+        tCtx.drawImage(certCanvas, 0, 0, 1200, 848);
+        const compressedJpeg = tempCanvas.toDataURL("image/jpeg", 0.75);
+
+        if (window.jspdf && window.jspdf.jsPDF) {
+          const { jsPDF } = window.jspdf;
+          const pdf = new jsPDF({
+            orientation: 'landscape',
+            unit: 'px',
+            format: [1200, 848]
+          });
+          pdf.addImage(compressedJpeg, 'JPEG', 0, 0, 1200, 848);
+          const pdfOutput = pdf.output('datauristring');
+          pdfBase64 = pdfOutput.split(',')[1] || "";
+        }
+
+        const payload = {
+          action: "SEND_EMAIL",
+          sendEmailCopy: true,
+          name: participantData.name,
+          email: participantData.email,
+          idNumber: participantData.idNumber,
+          organization: participantData.organization,
+          category: participantData.category,
+          certNumber: participantData.certNumber,
+          prizeCategoryWon: participantData.prizeCategoryWon,
+          rating: participantData.rating,
+          feedback: participantData.feedback,
+          allQuizCorrect: participantData.allQuizCorrect,
+          pdfBase64: pdfBase64
+        };
+
+        if (webhookUrl) {
+          await fetch(webhookUrl, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(payload)
+          });
+          showToast("Berjaya Dihantar", `Salinan sijil PDF telah disimpan ke Google Drive dan diemel ke ${participantData.email}.`, "fa-paper-plane");
+        } else {
+          showToast("Salinan E-mel", `Permintaan salinan ke ${participantData.email} telah direkodkan.`, "fa-envelope");
+        }
+
+        emailBtn.innerHTML = `<i class="fa-solid fa-check text-emerald-400"></i> Salinan Dihantar`;
+      } catch (err) {
+        console.warn("Ralat menghantar salinan e-mel:", err);
+        showToast("Makluman", `Permintaan salinan e-mel telah dicatatkan.`, "fa-circle-info");
+        emailBtn.innerHTML = originalText;
+        emailBtn.disabled = false;
+      }
+    }
+
+    function resetToNewVisitor() {
+      document.getElementById('participantForm').reset();
+      document.getElementById('step3Card').classList.add('hidden');
+      document.getElementById('step2Card').classList.add('hidden');
+      document.getElementById('step1Card').classList.remove('hidden');
+      document.getElementById('prizeWheelSection').classList.add('hidden');
+      document.getElementById('prizeWonBox').classList.add('hidden');
+      
+      participantData.allQuizCorrect = false;
+      participantData.rating = 0;
+      
+      const stars = document.querySelectorAll('#starRatingContainer .star-btn');
+      stars.forEach(btn => btn.className = "star-btn text-slate-600 text-lg hover:text-amber-400 transition");
+      document.getElementById('ratingFeedbackText').innerText = "Sila pilih penilaian bintang anda";
+      document.getElementById('ratingFeedbackText').className = "text-xs text-slate-400 font-medium ml-2";
+      
+      updateProgressIndicators(1);
+      window.scrollTo({ top: 100, behavior: 'smooth' });
+    }
+
+    let toastTimeout = null;
+    function showToast(title, message, iconClass = "fa-circle-check", isWarning = false) {
+      const toast = document.getElementById('toastNotification');
+      const toastTitle = document.getElementById('toastTitle');
+      const toastMsg = document.getElementById('toastMessage');
+      const toastIcon = document.getElementById('toastIcon');
+
+      toastTitle.innerText = title;
+      toastMsg.innerText = message;
+      toastIcon.innerHTML = `<i class="fa-solid ${iconClass}"></i>`;
+      toastIcon.className = isWarning ? "text-amber-400 text-lg mt-0.5" : "text-cyan-400 text-lg mt-0.5";
+
+      toast.classList.remove('translate-y-32');
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        hideToast();
+      }, 4000);
+    }
+
+    function hideToast() {
+      const toast = document.getElementById('toastNotification');
+      toast.classList.add('translate-y-32');
+    }
+
+    document.getElementById('adminPinInput')?.addEventListener('keyup', (e) => {
+      if (e.key === 'Enter') {
+        verifyAdminPinAndProceed();
+      }
     });
 
-    // Handle Tab/Screen Visibility
+    // Penyelarasan Pintar Tab & Skrin TV Apabila Aktif Semula
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden) {
         fetchLiveDashboardStats();
       }
     });
 
-    // Audio Controller
-    function toggleAudio() {
-      const music = document.getElementById('bgMusic');
-      const icon = document.getElementById('audioIcon');
-      if (music.paused) {
-        music.play();
-        icon.className = "fa-solid fa-volume-high text-emerald-400";
-      } else {
-        music.pause();
-        icon.className = "fa-solid fa-volume-xmark text-slate-400";
-      }
-    }
-
-    function enterAppAndPlayMusic() {
-      document.getElementById('welcomeScreen').classList.add('hidden');
-      const music = document.getElementById('bgMusic');
-      music.play().then(() => {
-        document.getElementById('audioIcon').className = "fa-solid fa-volume-high text-emerald-400";
-      }).catch(() => {});
-
-      // Log Visitor Entry via JSONP
-      logVisitorJSONP();
-    }
-
-    // JSONP Engine for CORS-Free Live Sync
-    function fetchLiveDashboardStats() {
-      const callbackName = 'jp_cb_' + Math.round(100000 * Math.random());
-      const script = document.createElement('script');
-      
-      window[callbackName] = function(data) {
-        delete window[callbackName];
-        if (script.parentNode) script.parentNode.removeChild(script);
-        if (data && data.status === "success") {
-          updateDashboardUI(data);
-        }
-      };
-      
-      script.onerror = function() {
-        delete window[callbackName];
-        if (script.parentNode) script.parentNode.removeChild(script);
-      };
-      
-      script.src = SCRIPT_URL + "?action=GET_DASHBOARD&callback=" + callbackName + "&_=" + Date.now();
-      document.body.appendChild(script);
-    }
-
-    function logVisitorJSONP() {
-      const callbackName = 'jp_cb_log_' + Math.round(100000 * Math.random());
-      const script = document.createElement('script');
-      
-      window[callbackName] = function(data) {
-        delete window[callbackName];
-        if (script.parentNode) script.parentNode.removeChild(script);
-        if (data && data.status === "success") {
-          updateDashboardUI(data);
-        }
-      };
-      
-      script.src = SCRIPT_URL + "?action=LOG_VISITOR&callback=" + callbackName + "&_=" + Date.now();
-      document.body.appendChild(script);
-    }
-
-    function updateDashboardUI(data) {
-      document.getElementById('dashVisitors').innerText = data.visitors || 0;
-      document.getElementById('dashQuizzes').innerText = data.perfectQuizzes || 0;
-      document.getElementById('dashCerts').innerText = data.certsGenerated || 0;
-      document.getElementById('dashRating').innerText = (data.avgRating || "5.0") + " / 5.0";
-      document.getElementById('lastUpdatedTime').innerText = "Dikemas kini: " + new Date().toLocaleTimeString('ms-MY');
-
-      // Update Activity Feed
-      const feed = document.getElementById('recentActivityFeed');
-      if (data.recentActivities && data.recentActivities.length > 0) {
-        feed.innerHTML = data.recentActivities.map(act => `
-          <div class="flex justify-between items-center py-1 border-b border-slate-800/50">
-            <span><i class="fa-solid fa-check-circle text-emerald-400 mr-1.5"></i><strong>${act.name}</strong> menjana sijil (${act.score}/3 tepat)</span>
-            <span class="text-[10px] text-slate-500">${act.time}</span>
-          </div>
-        `).join('');
-      } else {
-        feed.innerHTML = `<p class="italic text-slate-500">Sertai kuiz untuk menjadi yang terawal di papan pemuka!</p>`;
-      }
-    }
-
-    // Step 1 Validation
-    function validateStep1() {
-      const nama = document.getElementById('inputNama').value.trim();
-      const ic = document.getElementById('inputIC').value.trim();
-      const email = document.getElementById('inputEmail').value.trim();
-
-      if (!nama || nama.length < 3) {
-        alert("Sila masukkan Nama Penuh yang sah.");
-        return;
-      }
-      if (!ic || ic.length !== 12 || isNaN(ic)) {
-        alert("Sila masukkan 12 Digit No. Kad Pengenalan tanpa tanda (-).");
-        return;
-      }
-
-      participantData.nama = nama.toUpperCase();
-      participantData.ic = ic;
-      participantData.email = email;
-
-      document.getElementById('step1').classList.add('hidden');
-      document.getElementById('step2').classList.remove('hidden');
-    }
-
-    // Quiz Engine
-    function renderQuiz() {
-      const container = document.getElementById('dynamicQuizContainer');
-      container.innerHTML = kmQuestions.map((q, idx) => `
-        <div class="p-4 bg-slate-900/80 rounded-xl border border-slate-800 space-y-3">
-          <p class="font-semibold text-sm text-white">${idx + 1}. ${q.q}</p>
-          <div class="space-y-2">
-            ${q.options.map((opt, oIdx) => `
-              <label class="flex items-center space-x-3 p-3 rounded-lg bg-slate-950/60 border border-slate-800 cursor-pointer hover:border-janm-cyan transition">
-                <input type="radio" name="q${idx}" value="${oIdx}" ${oIdx === 0 ? 'checked' : ''} class="text-janm-cyan focus:ring-janm-cyan">
-                <span class="text-xs text-slate-200">${opt}</span>
-              </label>
-            `).join('')}
-          </div>
-        </div>
-      `).join('');
-    }
-
-    function verifyQuizAnswers() {
-      let score = 0;
-      kmQuestions.forEach((q, idx) => {
-        const selected = document.querySelector(`input[name="q${idx}"]:checked`);
-        if (selected && parseInt(selected.value) === q.answer) {
-          score++;
-        }
-      });
-
-      participantData.skor = Math.max(score, 3); // Ensure positive score
-
-      confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-
-      document.getElementById('step2').classList.add('hidden');
-      document.getElementById('step3').classList.remove('hidden');
-    }
-
-    // Wheel Engine
-    const prizes = ["Pena BPAD", "Nota KM JANM", "Lencana Audit", "Beg Eco BPAD", "Kunci Eksklusif"];
-    function drawWheel() {
-      const canvas = document.getElementById('wheelCanvas');
-      const ctx = canvas.getContext('2d');
-      const numSegments = prizes.length;
-      const anglePerSegment = (2 * Math.PI) / numSegments;
-      const colors = ['#002060', '#00F0FF', '#D4AF37', '#0B192C', '#1E3A8A'];
-
-      ctx.clearRect(0, 0, 300, 300);
-      for (let i = 0; i < numSegments; i++) {
-        ctx.beginPath();
-        ctx.moveTo(150, 150);
-        ctx.arc(150, 150, 140, i * anglePerSegment, (i + 1) * anglePerSegment);
-        ctx.fillStyle = colors[i % colors.length];
-        ctx.fill();
-        ctx.lineWidth = 2;
-        ctx.strokeStyle = '#D4AF37';
-        ctx.stroke();
-
-        ctx.save();
-        ctx.translate(150, 150);
-        ctx.rotate(i * anglePerSegment + anglePerSegment / 2);
-        ctx.textAlign = "right";
-        ctx.fillStyle = (i === 1) ? "#000" : "#FFF";
-        ctx.font = "bold 12px sans-serif";
-        ctx.fillText(prizes[i], 120, 4);
-        ctx.restore();
-      }
-    }
-
-    function spinWheel() {
-      const btn = document.getElementById('spinBtn');
-      btn.disabled = true;
-      btn.classList.add('opacity-50');
-
-      confetti({ particleCount: 120, spread: 80, origin: { y: 0.5 } });
-
-      setTimeout(() => {
-        alert("Tahniah! Anda memenangi cenderahati: Cenderahati Eksklusif BPAD!");
-      }, 800);
-    }
-
-    // Rating
-    function setRating(r) {
-      selectedRating = r;
-      participantData.rating = r;
-      const stars = document.getElementById('starContainer').children;
-      for (let i = 0; i < 5; i++) {
-        if (i < r) {
-          stars[i].className = "fa-solid fa-star cursor-pointer hover:scale-110 transition text-amber-400";
-        } else {
-          stars[i].className = "fa-regular fa-star cursor-pointer hover:scale-110 transition text-slate-600";
-        }
-      }
-    }
-
-    // Certificate Generator & Cloud Sync
-    function handleGenerateCertificate() {
-      document.getElementById('step3').classList.add('hidden');
-      document.getElementById('step4').classList.remove('hidden');
-
-      // Immediate Save & Sync to Google Sheets
-      fetch(SCRIPT_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({
-          action: "SAVE_PARTICIPANT",
-          nama: participantData.nama,
-          ic: participantData.ic,
-          email: participantData.email,
-          skor: participantData.skor,
-          rating: participantData.rating
-        })
-      }).then(() => {
-        setTimeout(fetchLiveDashboardStats, 1000);
-      }).catch(() => {});
-
-      drawCertificate();
-    }
-
-    function drawCertificate() {
-      const canvas = document.getElementById('certCanvas');
-      const ctx = canvas.getContext('2d');
-
-      // Background
-      ctx.fillStyle = '#0B192C';
-      ctx.fillRect(0, 0, 1200, 848);
-
-      // Cyber Circuit Vectors
-      ctx.strokeStyle = 'rgba(0, 240, 255, 0.25)';
-      ctx.lineWidth = 2;
-      for (let i = 0; i < 6; i++) {
-        ctx.beginPath();
-        ctx.moveTo(100 + i * 180, 0);
-        ctx.lineTo(100 + i * 180, 200 + i * 30);
-        ctx.lineTo(150 + i * 180, 250 + i * 30);
-        ctx.lineTo(150 + i * 180, 848);
-        ctx.stroke();
-      }
-
-      // Border
-      ctx.strokeStyle = '#D4AF37';
-      ctx.lineWidth = 8;
-      ctx.strokeRect(30, 30, 1140, 788);
-
-      // Header Logos
-      const jataImg = new Image();
-      jataImg.src = "JATA NEGARA.png";
-      jataImg.onload = function() {
-        ctx.drawImage(jataImg, 550, 60, 100, 80);
-
-        // Certificate Text
-        ctx.textAlign = "center";
-        ctx.fillStyle = "#FFFFFF";
-        ctx.font = "bold 26px sans-serif";
-        ctx.fillText("JABATAN AKAUNTAN NEGARA MALAYSIA", 600, 180);
-
-        ctx.fillStyle = "#00F0FF";
-        ctx.font = "bold 18px sans-serif";
-        ctx.fillText("BAHAGIAN PENGURUSAN AUDIT DALAM (BPAD)", 600, 210);
-
-        ctx.fillStyle = "#D4AF37";
-        ctx.font = "bold 42px serif";
-        ctx.fillText("SIJIL PENGHARGAAN DIGITAL", 600, 280);
-
-        ctx.fillStyle = "#E2E8F0";
-        ctx.font = "18px sans-serif";
-        ctx.fillText("Dengan ini diperakukan bahawa", 600, 330);
-
-        // Participant Name
-        ctx.fillStyle = "#00F0FF";
-        ctx.font = "bold 36px sans-serif";
-        ctx.fillText(participantData.nama, 600, 390);
-
-        ctx.fillStyle = "#CBD5E1";
-        ctx.font = "16px sans-serif";
-        ctx.fillText("No. KP: " + participantData.ic, 600, 425);
-
-        ctx.fillStyle = "#E2E8F0";
-        ctx.font = "18px sans-serif";
-        ctx.fillText("telah menyertai dan menyelesaikan Kuiz Knowledge Management (KM) dengan cemerlang di Reruai BPAD", 600, 480);
-        ctx.fillText("sempena Hari Knowledge Management JANM 2026.", 600, 510);
-
-        // Date & Serial
-        ctx.fillStyle = "#D4AF37";
-        ctx.font = "bold 16px sans-serif";
-        ctx.fillText("Tarikh: 24 September 2026  |  No. Siri: " + participantData.serialNo, 600, 570);
-
-        // Fail-Safe Verification Badge Vector
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(600, 660, 45, 0, 2 * Math.PI);
-        ctx.fillStyle = "#002060";
-        ctx.fill();
-        ctx.strokeStyle = "#D4AF37";
-        ctx.lineWidth = 4;
-        ctx.stroke();
-
-        ctx.fillStyle = "#D4AF37";
-        ctx.font = "bold 12px sans-serif";
-        ctx.fillText("PENGESAHAN", 600, 655);
-        ctx.fillText("DIGITAL BPAD", 600, 672);
-        ctx.restore();
-
-        // Footer Logo 80 Tahun
-        const logo80 = new Image();
-        logo80.src = "Logo 80 Tahun JANM.png";
-        logo80.onload = function() {
-          ctx.drawImage(logo80, 550, 720, 100, 50);
-        };
-      };
-    }
-
-    function downloadCertPNG() {
-      const canvas = document.getElementById('certCanvas');
-      const link = document.createElement('a');
-      link.download = 'Sijil_BPAD_' + participantData.ic + '.png';
-      link.href = canvas.toDataURL('image/png');
-      link.click();
-    }
-
-    function sendEmailCopy() {
-      if (!participantData.email) {
-        const userEmail = prompt("Sila masukkan alamat e-mel anda:");
-        if (!userEmail) return;
-        participantData.email = userEmail;
-      }
-
-      const btn = document.getElementById('btnEmailCopy');
-      btn.disabled = true;
-      btn.innerText = "Hantar Sijil...";
-
-      const canvas = document.getElementById('certCanvas');
-      const imgData = canvas.toDataURL('image/jpeg', 0.75);
-
-      const pdf = new jspdf.jsPDF('landscape', 'pt', [1200, 848]);
-      pdf.addImage(imgData, 'JPEG', 0, 0, 1200, 848);
-      const pdfBase64 = pdf.output('datauristring');
-
-      fetch(SCRIPT_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({
-          action: "SEND_EMAIL",
-          nama: participantData.nama,
-          ic: participantData.ic,
-          email: participantData.email,
-          pdfBase64: pdfBase64
-        })
-      }).then(() => {
-        alert("Sijil PDF telah berjaya disimpan ke folder 'Salinan Sijil' Google Drive dan dihantar ke e-mel " + participantData.email);
-        btn.disabled = false;
-        btn.innerText = "Salinkan ke E-mel & Google Drive";
-      }).catch(err => {
-        alert("Sijil telah diproses.");
-        btn.disabled = false;
-        btn.innerText = "Salinkan ke E-mel & Google Drive";
-      });
-    }
-
-    // Dashboard Modal & Admin Gestures
-    function openDashboardModal() {
-      document.getElementById('dashboardModal').classList.remove('hidden');
-      fetchLiveDashboardStats();
-    }
-
-    function closeDashboardModal() {
-      document.getElementById('dashboardModal').classList.add('hidden');
-    }
-
-    function handleAdminTap() {
-      adminTapCount++;
-      if (adminTapCount >= 5) {
-        adminTapCount = 0;
-        const pin = prompt("Mod Urusetia: Masukkan PIN Keselamatan:");
-        if (pin === "2026" || pin === "bpad2026") {
-          if (confirm("Adakah anda pasti untuk RESET statistik papan pemuka ke 0?")) {
-            const callbackName = 'jp_cb_reset_' + Math.round(100000 * Math.random());
-            const script = document.createElement('script');
-            script.src = SCRIPT_URL + "?action=RESET_METRICS&pin=" + pin + "&callback=" + callbackName;
-            document.body.appendChild(script);
-            alert("Papan pemuka telah di-reset.");
-            setTimeout(fetchLiveDashboardStats, 1000);
-          }
-        } else if (pin !== null) {
-          alert("PIN Tidak Sah!");
-        }
-      }
-    }
+    // Inisialisasi Laman & Selaraskan Papan Pemuka Setiap 3 Saat
+    renderDynamicShuffledQuiz();
+    fetchLiveDashboardStats();
+    setInterval(fetchLiveDashboardStats, 3000);
   </script>
 </body>
 </html>
