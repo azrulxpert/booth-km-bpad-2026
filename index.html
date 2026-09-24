@@ -1962,77 +1962,77 @@
     }
 
     async function handleSendEmailCopy() {
-      const emailBtn = document.getElementById('btnSendEmailCopy');
-      const originalText = emailBtn.innerHTML;
-      
-      const certCanvas = document.getElementById('certificateCanvas');
-      if (!certCanvas) return;
+  const emailBtn = document.getElementById('btnSendEmailCopy');
+  const originalText = emailBtn.innerHTML;
+  
+  const certCanvas = document.getElementById('certificateCanvas');
+  if (!certCanvas) return;
 
-      const webhookUrl = localStorage.getItem('janm_km_gas_url') || DEFAULT_GAS_URL;
+  const webhookUrl = localStorage.getItem('janm_km_gas_url') || DEFAULT_GAS_URL;
 
-      emailBtn.disabled = true;
-      emailBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Menghantar...`;
-      showToast("Menjana PDF...", "Menyediakan salinan PDF sijil untuk dihantar...", "fa-file-pdf");
+  emailBtn.disabled = true;
+  emailBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Menghantar...`;
+  showToast("Menjana PDF HD...", "Menyediakan salinan PDF sijil resolusi tinggi...", "fa-file-pdf");
 
-      try {
-        let pdfBase64 = "";
-        
-        // Mampatan kanvas untuk penghantaran selamat (~180KB)
-        const tempCanvas = document.createElement('canvas');
-        tempCanvas.width = 1200;
-        tempCanvas.height = 848;
-        const tCtx = tempCanvas.getContext('2d');
-        tCtx.drawImage(certCanvas, 0, 0, 1200, 848);
-        const compressedJpeg = tempCanvas.toDataURL("image/jpeg", 0.75);
+  try {
+    let pdfBase64 = "";
+    
+    // Resolusi Penuh HD (1600x1131) & Kualiti 0.88 (~250KB - Tajam Untuk Cetakan A4)
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = 1600;
+    tempCanvas.height = 1131;
+    const tCtx = tempCanvas.getContext('2d');
+    tCtx.drawImage(certCanvas, 0, 0, 1600, 1131);
+    const compressedJpeg = tempCanvas.toDataURL("image/jpeg", 0.88);
 
-        if (window.jspdf && window.jspdf.jsPDF) {
-          const { jsPDF } = window.jspdf;
-          const pdf = new jsPDF({
-            orientation: 'landscape',
-            unit: 'px',
-            format: [1200, 848]
-          });
-          pdf.addImage(compressedJpeg, 'JPEG', 0, 0, 1200, 848);
-          const pdfOutput = pdf.output('datauristring');
-          pdfBase64 = pdfOutput.split(',')[1] || "";
-        }
-
-        const payload = {
-          action: "SEND_EMAIL",
-          sendEmailCopy: true,
-          name: participantData.name,
-          email: participantData.email,
-          idNumber: participantData.idNumber,
-          organization: participantData.organization,
-          category: participantData.category,
-          certNumber: participantData.certNumber,
-          prizeCategoryWon: participantData.prizeCategoryWon,
-          rating: participantData.rating,
-          feedback: participantData.feedback,
-          allQuizCorrect: participantData.allQuizCorrect,
-          pdfBase64: pdfBase64
-        };
-
-        if (webhookUrl) {
-          await fetch(webhookUrl, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify(payload)
-          });
-          showToast("Berjaya Dihantar", `Salinan sijil PDF telah disimpan ke Google Drive dan diemel ke ${participantData.email}.`, "fa-paper-plane");
-        } else {
-          showToast("Salinan E-mel", `Permintaan salinan ke ${participantData.email} telah direkodkan.`, "fa-envelope");
-        }
-
-        emailBtn.innerHTML = `<i class="fa-solid fa-check text-emerald-400"></i> Salinan Dihantar`;
-      } catch (err) {
-        console.warn("Ralat menghantar salinan e-mel:", err);
-        showToast("Makluman", `Permintaan salinan e-mel telah dicatatkan.`, "fa-circle-info");
-        emailBtn.innerHTML = originalText;
-        emailBtn.disabled = false;
-      }
+    if (window.jspdf && window.jspdf.jsPDF) {
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF({
+        orientation: 'landscape',
+        unit: 'px',
+        format: [1600, 1131]
+      });
+      pdf.addImage(compressedJpeg, 'JPEG', 0, 0, 1600, 1131);
+      const pdfOutput = pdf.output('datauristring');
+      pdfBase64 = pdfOutput.split(',')[1] || "";
     }
+
+    const payload = {
+      action: "SEND_EMAIL",
+      sendEmailCopy: true,
+      name: participantData.name,
+      email: participantData.email,
+      idNumber: participantData.idNumber,
+      organization: participantData.organization,
+      category: participantData.category,
+      certNumber: participantData.certNumber,
+      prizeCategoryWon: participantData.prizeCategoryWon,
+      rating: participantData.rating,
+      feedback: participantData.feedback,
+      allQuizCorrect: participantData.allQuizCorrect,
+      pdfBase64: pdfBase64
+    };
+
+    if (webhookUrl) {
+      await fetch(webhookUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(payload)
+      });
+      showToast("Berjaya Dihantar", `Salinan sijil PDF HD telah disimpan ke Google Drive dan diemel ke ${participantData.email}.`, "fa-paper-plane");
+    } else {
+      showToast("Salinan E-mel", `Permintaan salinan ke ${participantData.email} telah direkodkan.`, "fa-envelope");
+    }
+
+    emailBtn.innerHTML = `<i class="fa-solid fa-check text-emerald-400"></i> Salinan Dihantar`;
+  } catch (err) {
+    console.warn("Ralat menghantar salinan e-mel:", err);
+    showToast("Makluman", `Permintaan salinan e-mel telah dicatatkan.`, "fa-circle-info");
+    emailBtn.innerHTML = originalText;
+    emailBtn.disabled = false;
+  }
+}
 
     function resetToNewVisitor() {
       document.getElementById('participantForm').reset();
