@@ -742,7 +742,8 @@
       ratingsCount: 0
     };
 
-    let nextCertificateSerial = "JANM-BPAD/KM2026/0001";
+    let nextCertificateSerial =
+"JANM-BPAD/KM2026/0001";
     let isFetchingLiveStats = false;
 
     function fetchLiveDashboardStats() {
@@ -1222,7 +1223,8 @@
         }
 
         const cbName = "janm_chk_" + Math.floor(Math.random() * 1000000);
-        const scriptUrl = `${gasUrl}?checkId=${encodeURIComponent(cleanId)}&callback=${cbName}&t=${Date.now()}`;
+        const scriptUrl =
+`${gasUrl}?action=CHECK_IC&ic=${encodeURIComponent(cleanId)}&callback=${cbName}&t=${Date.now()}`;
         let isDone = false;
 
         const timer = setTimeout(() => {
@@ -1564,7 +1566,7 @@
       }
 
       participantData.feedback = document.getElementById('visitorFeedback').value.trim();
-      participantData.certNumber = nextCertificateSerial || `JANM-BPAD/KM2026/${Math.floor(1000 + Math.random() * 9000)}`;
+      participantData.certNumber = nextCertificateSerial;
 
       const webhookUrl = localStorage.getItem('janm_km_gas_url') || DEFAULT_GAS_URL;
       if (webhookUrl) {
@@ -2072,11 +2074,14 @@
     });
 
     // Penyelarasan Pintar Tab & Skrin TV Apabila Aktif Semula
-    document.addEventListener('visibilitychange', () => {
-      if (!document.hidden) {
-        fetchLiveDashboardStats();
-      }
-    });
+    document.addEventListener(
+  'visibilitychange',
+  () => {
+    if (!document.hidden) {
+      fetchLiveDashboardStats();
+    }
+  }
+);
 
     // Inisialisasi Laman & Selaraskan Papan Pemuka Setiap 3 Saat
     renderDynamicShuffledQuiz();
