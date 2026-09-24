@@ -1575,18 +1575,29 @@
           mode: 'no-cors',
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify({
-            action: "SAVE_PARTICIPANT",
-            name: participantData.name,
-            email: participantData.email,
-            idNumber: participantData.idNumber,
-            organization: participantData.organization,
-            category: participantData.category,
-            certNumber: participantData.certNumber,
-            prizeCategoryWon: participantData.prizeCategoryWon,
-            rating: participantData.rating,
-            feedback: participantData.feedback,
-            allQuizCorrect: participantData.allQuizCorrect
-          })
+  action: "SAVE_PARTICIPANT",
+
+  nama: participantData.name,
+  email: participantData.email,
+  ic: participantData.idNumber,
+
+  organisasi: participantData.organization,
+  kategori: participantData.category,
+
+  skor: 3,
+
+  certNumber: participantData.certNumber,
+
+  prizeCategoryWon:
+    participantData.prizeCategoryWon,
+
+  rating: participantData.rating,
+
+  feedback: participantData.feedback,
+
+  allQuizCorrect:
+    participantData.allQuizCorrect
+})
         }).then(() => {
           setTimeout(fetchLiveDashboardStats, 1000);
         }).catch(() => {});
