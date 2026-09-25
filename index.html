@@ -381,7 +381,7 @@
                        maxlength="12"
                        pattern="[0-9]{12}"
                        inputmode="numeric"
-                       placeholder="Contoh: 000101011234" 
+                       placeholder="Contoh: 801207115121" 
                        oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 12)"
                        class="w-full pl-10 pr-3 py-2.5 rounded-xl bg-slate-900/90 border border-slate-700 text-white text-sm focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none font-mono transition">
               </div>
@@ -564,7 +564,7 @@
     </div>
   </footer>
 
-  <!-- Modal Papan Pemuka Analitis (Bersih Tanpa Butang Mengelirukan) -->
+  <!-- Modal Papan Pemuka Analitis -->
   <div id="dashboardModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
     <div class="glass-card max-w-lg w-full rounded-2xl p-6 border border-cyan-500/40 space-y-4 max-h-[90vh] overflow-y-auto">
       <div class="flex items-center justify-between border-b border-slate-700 pb-3">
@@ -733,7 +733,6 @@
 
     const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbz46CPAdgKcF-zBa4QwDMbReUt-X9TW4BEK64oq6apN3maR4zaxQEv-HNHL9YQGeKxYGA/exec";
 
-    // Papan pemuka tulen masa nyata (Dipacu 100% daripada Google Sheets)
     let boothDashboardState = {
       visitorsCount: 0,
       quizPassCount: 0,
@@ -742,8 +741,7 @@
       ratingsCount: 0
     };
 
-    let nextCertificateSerial =
-"JANM-BPAD/KM2026/0001";
+    let nextCertificateSerial = "JANM-BPAD/KM2026/0001";
     let isFetchingLiveStats = false;
 
     function fetchLiveDashboardStats() {
@@ -757,7 +755,7 @@
       }
 
       const callbackName = "janm_cb_" + Math.floor(Math.random() * 1000000);
-      const scriptUrl = `${gasUrl}?getMetrics=true&callback=${callbackName}&t=${Date.now()}`;
+      const scriptUrl = `${gasUrl}?action=GET_DASHBOARD&callback=${callbackName}&t=${Date.now()}`;
 
       window[callbackName] = function(metrics) {
         try {
@@ -805,7 +803,7 @@
 
     async function fetchFallback(gasUrl) {
       try {
-        const fetchUrl = `${gasUrl}?getMetrics=true&t=${Date.now()}`;
+        const fetchUrl = `${gasUrl}?action=GET_DASHBOARD&t=${Date.now()}`;
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 6000);
 
@@ -1214,6 +1212,9 @@
       });
     }
 
+    /**
+     * Semakan Ketat No KP Bertindih Menggunakan JSONP (Kalis Timeout)
+     */
     function checkIdDuplicateWithGAS(cleanId) {
       return new Promise((resolve) => {
         const gasUrl = localStorage.getItem('janm_km_gas_url') || DEFAULT_GAS_URL;
@@ -1223,8 +1224,7 @@
         }
 
         const cbName = "janm_chk_" + Math.floor(Math.random() * 1000000);
-        const scriptUrl =
-`${gasUrl}?action=CHECK_IC&ic=${encodeURIComponent(cleanId)}&callback=${cbName}&t=${Date.now()}`;
+        const scriptUrl = `${gasUrl}?action=CHECK_IC&ic=${encodeURIComponent(cleanId)}&callback=${cbName}&t=${Date.now()}`;
         let isDone = false;
 
         const timer = setTimeout(() => {
@@ -1233,9 +1233,10 @@
             delete window[cbName];
             const el = document.getElementById(cbName);
             if (el) el.remove();
+            // Sekiranya sambungan terputus/timeout, benarkan tetapi tandakan amaran
             resolve({ isDuplicate: false, status: 'timeout' });
           }
-        }, 5000);
+        }, 4000);
 
         window[cbName] = function(json) {
           if (!isDone) {
@@ -1245,8 +1246,12 @@
             const el = document.getElementById(cbName);
             if (el) el.remove();
 
-            if (json && json.exists === true) {
-              resolve({ isDuplicate: true, certNumber: json.certNumber || "" });
+            if (json && (json.exists === true || json.exists === "true")) {
+              resolve({ 
+                isDuplicate: true, 
+                certNumber: json.certNumber || "",
+                name: json.name || ""
+              });
             } else {
               resolve({ isDuplicate: false });
             }
@@ -1317,12 +1322,14 @@
       btnProceed.disabled = true;
       btnText.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i> Menyemak Pendaftaran...`;
 
+      // SEMAKAN KETAT BERTINDIH SEBELUM BENARKAN KE LANGKAH 2
       const gasCheck = await checkIdDuplicateWithGAS(idInput);
       btnProceed.disabled = false;
       btnText.innerHTML = originalText;
 
       if (gasCheck.isDuplicate) {
-        showToast("No. KP Telah Wujud", `No. Kad Pengenalan ini telah didaftarkan dalam rekod ${gasCheck.certNumber ? `[${gasCheck.certNumber}]` : ''}. Janaan bertindih tidak dibenarkan.`, "fa-ban", true);
+        showToast("No. KP Telah Wujud dalam Rekod BPAD", `No. Kad Pengenalan (${idInput}) telahpun mendaftar sebelum ini dengan No. Sijil [${gasCheck.certNumber || 'JANM-BPAD/KM2026/0001'}].`, "fa-ban", true);
+        alert(`SEKATAN PENDAFTARAN BERTINDIH:\n\nNo. Kad Pengenalan ${idInput} (${gasCheck.name || nameInput}) telah didaftarkan dalam rekod pangkalan data Booth BPAD.\n\nSijil Digital bagi rekod ini telah pun dijana [${gasCheck.certNumber}]. Pendaftaran kali kedua tidak dibenarkan.`);
         document.getElementById('idNumber').focus();
         return;
       }
@@ -1386,10 +1393,10 @@
     }
 
     const prizeSlices = [
-  { label: "Kategori 1", color: "#0284c7" },
-  { label: "Kategori 2", color: "#d97706" },
-  { label: "Kategori 3", color: "#0d9488" }
-];
+      { label: "Kategori 1", color: "#0284c7" },
+      { label: "Kategori 2", color: "#d97706" },
+      { label: "Kategori 3", color: "#0d9488" }
+    ];
 
     let wheelCurrentAngle = 0;
     let isWheelSpinning = false;
@@ -1429,14 +1436,12 @@
         wCtx.restore();
       }
 
-      // Gegelung Luar Bercahaya (Glow Ring)
       wCtx.beginPath();
       wCtx.arc(center, center, radius, 0, Math.PI * 2);
       wCtx.strokeStyle = "rgba(56, 189, 248, 0.6)";
       wCtx.lineWidth = 4;
       wCtx.stroke();
 
-      // Titik Tengah Cyber
       wCtx.beginPath();
       wCtx.arc(center, center, 26, 0, Math.PI * 2);
       wCtx.fillStyle = "#030a16";
@@ -1573,29 +1578,19 @@
           mode: 'no-cors',
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify({
-  action: "SAVE_PARTICIPANT",
-
-  nama: participantData.name,
-  email: participantData.email,
-  ic: participantData.idNumber,
-
-  organisasi: participantData.organization,
-  kategori: participantData.category,
-
-  skor: 3,
-
-  certNumber: participantData.certNumber,
-
-  prizeCategoryWon:
-    participantData.prizeCategoryWon,
-
-  rating: participantData.rating,
-
-  feedback: participantData.feedback,
-
-  allQuizCorrect:
-    participantData.allQuizCorrect
-})
+            action: "SAVE_PARTICIPANT",
+            nama: participantData.name,
+            email: participantData.email,
+            ic: participantData.idNumber,
+            organisasi: participantData.organization,
+            kategori: participantData.category,
+            skor: 3,
+            certNumber: participantData.certNumber,
+            prizeCategoryWon: participantData.prizeCategoryWon,
+            rating: participantData.rating,
+            feedback: participantData.feedback,
+            allQuizCorrect: participantData.allQuizCorrect
+          })
         }).then(() => {
           setTimeout(fetchLiveDashboardStats, 1000);
         }).catch(() => {});
@@ -1618,7 +1613,6 @@
       const w = certCanvas.width;
       const h = certCanvas.height;
 
-      // 1. LATAR BELAKANG ELEKTRIK SIBER HIDUP (Pelan Strategik JANM 2026-2030, ms 4 & 20)
       const bgGrad = cCtx.createRadialGradient(w / 2, h / 2 - 60, 60, w / 2, h / 2, w * 0.72);
       bgGrad.addColorStop(0, "#0e3a75");
       bgGrad.addColorStop(0.4, "#092552");
@@ -1627,7 +1621,6 @@
       cCtx.fillStyle = bgGrad;
       cCtx.fillRect(0, 0, w, h);
 
-      // Grid Halus Berteknologi AI
       cCtx.strokeStyle = "rgba(56, 189, 248, 0.08)";
       cCtx.lineWidth = 1;
       for (let x = 60; x < w; x += 60) {
@@ -1643,7 +1636,6 @@
         cCtx.stroke();
       }
 
-      // 2. CORAK LITAR TEGAK PERSIS KULIT PELAN STRATEGIK JANM (Halaman 4, 20 & 36)
       cCtx.save();
       cCtx.strokeStyle = "rgba(56, 189, 248, 0.4)";
       cCtx.fillStyle = "rgba(56, 189, 248, 0.85)";
@@ -1680,7 +1672,6 @@
       });
       cCtx.restore();
 
-      // 3. BUCU PEPENJURU SIBER DI SUDUT BAWAH KIRI (Signature Diagonal dari Pelan Strategik JANM)
       cCtx.save();
       cCtx.beginPath();
       cCtx.moveTo(0, h - 340);
@@ -1692,7 +1683,6 @@
       cCtx.fillStyle = "#0c1533";
       cCtx.fill();
 
-      // Jalur Perak Neon Bersinar
       cCtx.beginPath();
       cCtx.moveTo(0, h - 340);
       cCtx.lineTo(240, h - 100);
@@ -1702,7 +1692,6 @@
       cCtx.lineWidth = 4;
       cCtx.stroke();
 
-      // Suar Cahaya Bucu (Flare Spark)
       [[240, h - 100], [420, h - 100]].forEach(([fx, fy]) => {
         const flareGrad = cCtx.createRadialGradient(fx, fy, 1, fx, fy, 16);
         flareGrad.addColorStop(0, "#ffffff");
@@ -1715,7 +1704,6 @@
       });
       cCtx.restore();
 
-      // 4. BINGKAI EMAS DIRAJA & KURUNGAN SUDUT TEKNOLOGI TINGGI
       cCtx.strokeStyle = "rgba(56, 189, 248, 0.35)";
       cCtx.lineWidth = 2;
       cCtx.strokeRect(30, 30, w - 60, h - 60);
@@ -1736,7 +1724,6 @@
         cCtx.fillRect(cx, cy, 4, bCorner);
       });
 
-      // 5. TEKS PENGEPALA KORPORAT
       cCtx.textAlign = "center";
       cCtx.fillStyle = "#cbd5e1";
       cCtx.font = "600 18px 'Plus Jakarta Sans', sans-serif";
@@ -1746,7 +1733,6 @@
       cCtx.font = "700 16px 'Space Grotesk', sans-serif";
       cCtx.fillText("BAHAGIAN PENGURUSAN AUDIT DALAM (BPAD)", w / 2, 260);
 
-      // TAJUK SIJIL PENGHARGAAN EMAS
       cCtx.save();
       cCtx.shadowColor = "rgba(245, 158, 11, 0.4)";
       cCtx.shadowBlur = 18;
@@ -1770,7 +1756,6 @@
       cCtx.font = "italic 400 20px 'Plus Jakarta Sans', sans-serif";
       cCtx.fillText("Dengan ini diperakui bahawa", w / 2, 420);
 
-      // NAMA PESERTA
       cCtx.save();
       cCtx.shadowColor = "rgba(56, 189, 248, 0.35)";
       cCtx.shadowBlur = 14;
@@ -1779,17 +1764,14 @@
       cCtx.fillText(participantData.name || "NAMA PESERTA", w / 2, 480);
       cCtx.restore();
 
-      // NOMBOR KAD PENGENALAN (TERUS 12 ANGKA)
       cCtx.fillStyle = "#38bdf8";
       cCtx.font = "700 24px 'Space Grotesk', monospace";
       cCtx.fillText(participantData.idNumber || "000101011234", w / 2, 522);
 
-      // ORGANISASI / BAHAGIAN
       cCtx.fillStyle = "#94a3b8";
       cCtx.font = "600 20px 'Plus Jakarta Sans', sans-serif";
       cCtx.fillText(participantData.organization || "BAHAGIAN PENGURUSAN AUDIT DALAM (BPAD)", w / 2, 558);
 
-      // 6. TEKS PERAKUAN RASMI BPAD
       cCtx.fillStyle = "#e2e8f0";
       cCtx.font = "400 21px 'Plus Jakarta Sans', sans-serif";
       cCtx.fillText("Telah hadir dan menyertai aktiviti di Booth", w / 2, 626);
@@ -1803,7 +1785,6 @@
       cCtx.fillText("sempena Hari Knowledge Management JANM 2026", w / 2, 698);
       cCtx.fillText("pada 28 September 2026 bertempat di Lobi Utama, JANM Putrajaya.", w / 2, 732);
 
-      // 7. TANDATANGAN PENGARAH & PENGESAHAN RASMI BPAD
       cCtx.textAlign = "left";
       cCtx.fillStyle = "#38bdf8";
       cCtx.font = "italic 700 20px 'Plus Jakarta Sans', sans-serif";
@@ -1823,7 +1804,6 @@
       cCtx.fillStyle = "#38bdf8";
       cCtx.fillText("DIJANA SECARA DIGITAL & SAH", w - 140, 1010);
 
-      // 8. LOGO KEMENTERIAN KEWANGAN JANM (ATAS TENGAH)
       const imgJata = await safeGetImage('imgJata1', 'Logo Kementerian Kewangan JANM.png') || await safeGetImage('imgJata2', 'JATA NEGARA.png');
       if (imgJata && imgJata.naturalWidth > 0) {
         const jWidth = 145;
@@ -1842,7 +1822,6 @@
         cCtx.restore();
       }
 
-      // 9. LOGO 80 TAHUN JANM (BAWAH TENGAH)
       const img80 = await safeGetImage('imgLogo80', 'Logo 80 Tahun JANM.png');
       if (img80 && img80.naturalWidth > 0) {
         const lWidth = 135;
@@ -1850,7 +1829,6 @@
         cCtx.drawImage(img80, (w - lWidth) / 2, 800, lWidth, lHeight);
       }
 
-      // 10. KOD QR PENGESAHAN KETULENAN SIJIL DENGAN SISTEM KESELAMATAN SANDARAN VEKTOR
       const qrBoxX = w - 240;
       const qrBoxY = 830;
       const qrBoxSize = 96;
@@ -1960,77 +1938,76 @@
     }
 
     async function handleSendEmailCopy() {
-  const emailBtn = document.getElementById('btnSendEmailCopy');
-  const originalText = emailBtn.innerHTML;
-  
-  const certCanvas = document.getElementById('certificateCanvas');
-  if (!certCanvas) return;
+      const emailBtn = document.getElementById('btnSendEmailCopy');
+      const originalText = emailBtn.innerHTML;
+      
+      const certCanvas = document.getElementById('certificateCanvas');
+      if (!certCanvas) return;
 
-  const webhookUrl = localStorage.getItem('janm_km_gas_url') || DEFAULT_GAS_URL;
+      const webhookUrl = localStorage.getItem('janm_km_gas_url') || DEFAULT_GAS_URL;
 
-  emailBtn.disabled = true;
-  emailBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Menghantar...`;
-  showToast("Menjana PDF HD...", "Menyediakan salinan PDF sijil resolusi tinggi...", "fa-file-pdf");
+      emailBtn.disabled = true;
+      emailBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Menghantar...`;
+      showToast("Menjana PDF HD...", "Menyediakan salinan PDF sijil resolusi tinggi...", "fa-file-pdf");
 
-  try {
-    let pdfBase64 = "";
-    
-    // Resolusi Penuh HD (1600x1131) & Kualiti 0.88 (~250KB - Tajam Untuk Cetakan A4)
-    const tempCanvas = document.createElement('canvas');
-    tempCanvas.width = 1600;
-    tempCanvas.height = 1131;
-    const tCtx = tempCanvas.getContext('2d');
-    tCtx.drawImage(certCanvas, 0, 0, 1600, 1131);
-    const compressedJpeg = tempCanvas.toDataURL("image/jpeg", 0.88);
+      try {
+        let pdfBase64 = "";
+        
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = 1600;
+        tempCanvas.height = 1131;
+        const tCtx = tempCanvas.getContext('2d');
+        tCtx.drawImage(certCanvas, 0, 0, 1600, 1131);
+        const compressedJpeg = tempCanvas.toDataURL("image/jpeg", 0.88);
 
-    if (window.jspdf && window.jspdf.jsPDF) {
-      const { jsPDF } = window.jspdf;
-      const pdf = new jsPDF({
-        orientation: 'landscape',
-        unit: 'px',
-        format: [1600, 1131]
-      });
-      pdf.addImage(compressedJpeg, 'JPEG', 0, 0, 1600, 1131);
-      const pdfOutput = pdf.output('datauristring');
-      pdfBase64 = pdfOutput.split(',')[1] || "";
+        if (window.jspdf && window.jspdf.jsPDF) {
+          const { jsPDF } = window.jspdf;
+          const pdf = new jsPDF({
+            orientation: 'landscape',
+            unit: 'px',
+            format: [1600, 1131]
+          });
+          pdf.addImage(compressedJpeg, 'JPEG', 0, 0, 1600, 1131);
+          const pdfOutput = pdf.output('datauristring');
+          pdfBase64 = pdfOutput.split(',')[1] || "";
+        }
+
+        const payload = {
+          action: "SEND_EMAIL",
+          sendEmailCopy: true,
+          name: participantData.name,
+          email: participantData.email,
+          idNumber: participantData.idNumber,
+          organization: participantData.organization,
+          category: participantData.category,
+          certNumber: participantData.certNumber,
+          prizeCategoryWon: participantData.prizeCategoryWon,
+          rating: participantData.rating,
+          feedback: participantData.feedback,
+          allQuizCorrect: participantData.allQuizCorrect,
+          pdfBase64: pdfBase64
+        };
+
+        if (webhookUrl) {
+          await fetch(webhookUrl, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(payload)
+          });
+          showToast("Berjaya Dihantar", `Salinan sijil PDF HD telah disimpan ke Google Drive dan diemel ke ${participantData.email}.`, "fa-paper-plane");
+        } else {
+          showToast("Salinan E-mel", `Permintaan salinan ke ${participantData.email} telah direkodkan.`, "fa-envelope");
+        }
+
+        emailBtn.innerHTML = `<i class="fa-solid fa-check text-emerald-400"></i> Salinan Dihantar`;
+      } catch (err) {
+        console.warn("Ralat menghantar salinan e-mel:", err);
+        showToast("Makluman", `Permintaan salinan e-mel telah dicatatkan.`, "fa-circle-info");
+        emailBtn.innerHTML = originalText;
+        emailBtn.disabled = false;
+      }
     }
-
-    const payload = {
-      action: "SEND_EMAIL",
-      sendEmailCopy: true,
-      name: participantData.name,
-      email: participantData.email,
-      idNumber: participantData.idNumber,
-      organization: participantData.organization,
-      category: participantData.category,
-      certNumber: participantData.certNumber,
-      prizeCategoryWon: participantData.prizeCategoryWon,
-      rating: participantData.rating,
-      feedback: participantData.feedback,
-      allQuizCorrect: participantData.allQuizCorrect,
-      pdfBase64: pdfBase64
-    };
-
-    if (webhookUrl) {
-      await fetch(webhookUrl, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify(payload)
-      });
-      showToast("Berjaya Dihantar", `Salinan sijil PDF HD telah disimpan ke Google Drive dan diemel ke ${participantData.email}.`, "fa-paper-plane");
-    } else {
-      showToast("Salinan E-mel", `Permintaan salinan ke ${participantData.email} telah direkodkan.`, "fa-envelope");
-    }
-
-    emailBtn.innerHTML = `<i class="fa-solid fa-check text-emerald-400"></i> Salinan Dihantar`;
-  } catch (err) {
-    console.warn("Ralat menghantar salinan e-mel:", err);
-    showToast("Makluman", `Permintaan salinan e-mel telah dicatatkan.`, "fa-circle-info");
-    emailBtn.innerHTML = originalText;
-    emailBtn.disabled = false;
-  }
-}
 
     function resetToNewVisitor() {
       document.getElementById('participantForm').reset();
@@ -2082,17 +2059,12 @@
       }
     });
 
-    // Penyelarasan Pintar Tab & Skrin TV Apabila Aktif Semula
-    document.addEventListener(
-  'visibilitychange',
-  () => {
-    if (!document.hidden) {
-      fetchLiveDashboardStats();
-    }
-  }
-);
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) {
+        fetchLiveDashboardStats();
+      }
+    });
 
-    // Inisialisasi Laman & Selaraskan Papan Pemuka Setiap 3 Saat
     renderDynamicShuffledQuiz();
     fetchLiveDashboardStats();
     setInterval(fetchLiveDashboardStats, 3000);
