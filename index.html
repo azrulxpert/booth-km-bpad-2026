@@ -11,7 +11,7 @@
   <!-- Font Awesome 6 CDN -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
-  <!-- Google Fonts: Plus Jakarta Sans, Cinzel & Space Grotesk -->
+  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
@@ -381,7 +381,7 @@
                        maxlength="12"
                        pattern="[0-9]{12}"
                        inputmode="numeric"
-                       placeholder="Contoh: 801207115121" 
+                       placeholder="Contoh: 000101011234" 
                        oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 12)"
                        class="w-full pl-10 pr-3 py-2.5 rounded-xl bg-slate-900/90 border border-slate-700 text-white text-sm focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none font-mono transition">
               </div>
@@ -611,7 +611,7 @@
     </div>
   </div>
 
-  <!-- Modal Kata Laluan Urusetia (Mod Tersembunyi) -->
+  <!-- Modal PIN Urusetia -->
   <div id="adminPinModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
     <div class="glass-card max-w-xs w-full rounded-2xl p-5 border border-cyan-500/50 space-y-3 text-center shadow-2xl">
       <div class="w-10 h-10 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center mx-auto text-lg">
@@ -755,7 +755,7 @@
       }
 
       const callbackName = "janm_cb_" + Math.floor(Math.random() * 1000000);
-      const scriptUrl = `${gasUrl}?action=GET_DASHBOARD&callback=${callbackName}&t=${Date.now()}`;
+      const scriptUrl = `${gasUrl}?getMetrics=true&callback=${callbackName}&t=${Date.now()}`;
 
       window[callbackName] = function(metrics) {
         try {
@@ -803,14 +803,11 @@
 
     async function fetchFallback(gasUrl) {
       try {
-        const fetchUrl = `${gasUrl}?action=GET_DASHBOARD&t=${Date.now()}`;
+        const fetchUrl = `${gasUrl}?getMetrics=true&t=${Date.now()}`;
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 6000);
 
-        const response = await fetch(fetchUrl, { 
-          cache: 'no-store',
-          signal: controller.signal 
-        });
+        const response = await fetch(fetchUrl, { cache: 'no-store', signal: controller.signal });
         clearTimeout(timeoutId);
 
         if (response.ok) {
@@ -1212,9 +1209,6 @@
       });
     }
 
-    /**
-     * Semakan Ketat No KP Bertindih Menggunakan JSONP (Kalis Timeout)
-     */
     function checkIdDuplicateWithGAS(cleanId) {
       return new Promise((resolve) => {
         const gasUrl = localStorage.getItem('janm_km_gas_url') || DEFAULT_GAS_URL;
@@ -1233,10 +1227,9 @@
             delete window[cbName];
             const el = document.getElementById(cbName);
             if (el) el.remove();
-            // Sekiranya sambungan terputus/timeout, benarkan tetapi tandakan amaran
             resolve({ isDuplicate: false, status: 'timeout' });
           }
-        }, 4000);
+        }, 5000);
 
         window[cbName] = function(json) {
           if (!isDone) {
@@ -1246,12 +1239,8 @@
             const el = document.getElementById(cbName);
             if (el) el.remove();
 
-            if (json && (json.exists === true || json.exists === "true")) {
-              resolve({ 
-                isDuplicate: true, 
-                certNumber: json.certNumber || "",
-                name: json.name || ""
-              });
+            if (json && json.exists === true) {
+              resolve({ isDuplicate: true, certNumber: json.certNumber || "" });
             } else {
               resolve({ isDuplicate: false });
             }
@@ -1322,16 +1311,15 @@
       btnProceed.disabled = true;
       btnText.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i> Menyemak Pendaftaran...`;
 
-      // SEMAKAN KETAT BERTINDIH SEBELUM BENARKAN KE LANGKAH 2
+      // SEMAKAN KETAT NO. KP BERTINDIH
       const gasCheck = await checkIdDuplicateWithGAS(idInput);
       btnProceed.disabled = false;
       btnText.innerHTML = originalText;
 
       if (gasCheck.isDuplicate) {
-        showToast("No. KP Telah Wujud dalam Rekod BPAD", `No. Kad Pengenalan (${idInput}) telahpun mendaftar sebelum ini dengan No. Sijil [${gasCheck.certNumber || 'JANM-BPAD/KM2026/0001'}].`, "fa-ban", true);
-        alert(`SEKATAN PENDAFTARAN BERTINDIH:\n\nNo. Kad Pengenalan ${idInput} (${gasCheck.name || nameInput}) telah didaftarkan dalam rekod pangkalan data Booth BPAD.\n\nSijil Digital bagi rekod ini telah pun dijana [${gasCheck.certNumber}]. Pendaftaran kali kedua tidak dibenarkan.`);
+        showToast("No. KP Telah Wujud", `No. Kad Pengenalan ini telah didaftarkan sebelum ini ${gasCheck.certNumber ? `[${gasCheck.certNumber}]` : ''}. Pendaftaran bertindih adalah tidak dibenarkan.`, "fa-ban", true);
         document.getElementById('idNumber').focus();
-        return;
+        return; // SEKAT PENDAFTARAN BERTINDIH
       }
 
       participantData.name = nameInput.toUpperCase();
@@ -1392,6 +1380,7 @@
       }
     }
 
+    // DIHADKAN KEPADA 3 KATEGORI HADIAH SAHAJA
     const prizeSlices = [
       { label: "Kategori 1", color: "#0284c7" },
       { label: "Kategori 2", color: "#d97706" },
@@ -1431,17 +1420,19 @@
         wCtx.rotate(start + sliceAngle / 2);
         wCtx.textAlign = "right";
         wCtx.fillStyle = "#ffffff";
-        wCtx.font = "bold 13px 'Plus Jakarta Sans', sans-serif";
+        wCtx.font = "bold 14px 'Plus Jakarta Sans', sans-serif";
         wCtx.fillText(prizeSlices[i].label, radius - 20, 5);
         wCtx.restore();
       }
 
+      // Gegelung Luar Bercahaya
       wCtx.beginPath();
       wCtx.arc(center, center, radius, 0, Math.PI * 2);
       wCtx.strokeStyle = "rgba(56, 189, 248, 0.6)";
       wCtx.lineWidth = 4;
       wCtx.stroke();
 
+      // Titik Tengah Cyber
       wCtx.beginPath();
       wCtx.arc(center, center, 26, 0, Math.PI * 2);
       wCtx.fillStyle = "#030a16";
@@ -1613,6 +1604,7 @@
       const w = certCanvas.width;
       const h = certCanvas.height;
 
+      // 1. LATAR BELAKANG ELEKTRIK SIBER HIDUP
       const bgGrad = cCtx.createRadialGradient(w / 2, h / 2 - 60, 60, w / 2, h / 2, w * 0.72);
       bgGrad.addColorStop(0, "#0e3a75");
       bgGrad.addColorStop(0.4, "#092552");
@@ -1621,6 +1613,7 @@
       cCtx.fillStyle = bgGrad;
       cCtx.fillRect(0, 0, w, h);
 
+      // Grid Halus Berteknologi AI
       cCtx.strokeStyle = "rgba(56, 189, 248, 0.08)";
       cCtx.lineWidth = 1;
       for (let x = 60; x < w; x += 60) {
@@ -1636,6 +1629,7 @@
         cCtx.stroke();
       }
 
+      // 2. CORAK LITAR TEGAK PERSIS KULIT PELAN STRATEGIK JANM
       cCtx.save();
       cCtx.strokeStyle = "rgba(56, 189, 248, 0.4)";
       cCtx.fillStyle = "rgba(56, 189, 248, 0.85)";
@@ -1672,6 +1666,7 @@
       });
       cCtx.restore();
 
+      // 3. BUCU PEPENJURU SIBER DI SUDUT BAWAH KIRI
       cCtx.save();
       cCtx.beginPath();
       cCtx.moveTo(0, h - 340);
@@ -1683,6 +1678,7 @@
       cCtx.fillStyle = "#0c1533";
       cCtx.fill();
 
+      // Jalur Perak Neon Bersinar
       cCtx.beginPath();
       cCtx.moveTo(0, h - 340);
       cCtx.lineTo(240, h - 100);
@@ -1692,6 +1688,7 @@
       cCtx.lineWidth = 4;
       cCtx.stroke();
 
+      // Suar Cahaya Bucu
       [[240, h - 100], [420, h - 100]].forEach(([fx, fy]) => {
         const flareGrad = cCtx.createRadialGradient(fx, fy, 1, fx, fy, 16);
         flareGrad.addColorStop(0, "#ffffff");
@@ -1704,6 +1701,7 @@
       });
       cCtx.restore();
 
+      // 4. BINGKAI EMAS DIRAJA & KURUNGAN SUDUT TEKNOLOGI TINGGI
       cCtx.strokeStyle = "rgba(56, 189, 248, 0.35)";
       cCtx.lineWidth = 2;
       cCtx.strokeRect(30, 30, w - 60, h - 60);
@@ -1724,6 +1722,7 @@
         cCtx.fillRect(cx, cy, 4, bCorner);
       });
 
+      // 5. TEKS PENGEPALA KORPORAT
       cCtx.textAlign = "center";
       cCtx.fillStyle = "#cbd5e1";
       cCtx.font = "600 18px 'Plus Jakarta Sans', sans-serif";
@@ -1733,6 +1732,7 @@
       cCtx.font = "700 16px 'Space Grotesk', sans-serif";
       cCtx.fillText("BAHAGIAN PENGURUSAN AUDIT DALAM (BPAD)", w / 2, 260);
 
+      // TAJUK SIJIL PENGHARGAAN EMAS
       cCtx.save();
       cCtx.shadowColor = "rgba(245, 158, 11, 0.4)";
       cCtx.shadowBlur = 18;
@@ -1756,6 +1756,7 @@
       cCtx.font = "italic 400 20px 'Plus Jakarta Sans', sans-serif";
       cCtx.fillText("Dengan ini diperakui bahawa", w / 2, 420);
 
+      // NAMA PESERTA
       cCtx.save();
       cCtx.shadowColor = "rgba(56, 189, 248, 0.35)";
       cCtx.shadowBlur = 14;
@@ -1764,14 +1765,17 @@
       cCtx.fillText(participantData.name || "NAMA PESERTA", w / 2, 480);
       cCtx.restore();
 
+      // NOMBOR KAD PENGENALAN
       cCtx.fillStyle = "#38bdf8";
       cCtx.font = "700 24px 'Space Grotesk', monospace";
       cCtx.fillText(participantData.idNumber || "000101011234", w / 2, 522);
 
+      // ORGANISASI / BAHAGIAN
       cCtx.fillStyle = "#94a3b8";
       cCtx.font = "600 20px 'Plus Jakarta Sans', sans-serif";
       cCtx.fillText(participantData.organization || "BAHAGIAN PENGURUSAN AUDIT DALAM (BPAD)", w / 2, 558);
 
+      // 6. TEKS PERAKUAN RASMI BPAD
       cCtx.fillStyle = "#e2e8f0";
       cCtx.font = "400 21px 'Plus Jakarta Sans', sans-serif";
       cCtx.fillText("Telah hadir dan menyertai aktiviti di Booth", w / 2, 626);
@@ -1785,6 +1789,7 @@
       cCtx.fillText("sempena Hari Knowledge Management JANM 2026", w / 2, 698);
       cCtx.fillText("pada 28 September 2026 bertempat di Lobi Utama, JANM Putrajaya.", w / 2, 732);
 
+      // 7. TANDATANGAN PENGARAH & PENGESAHAN RASMI BPAD
       cCtx.textAlign = "left";
       cCtx.fillStyle = "#38bdf8";
       cCtx.font = "italic 700 20px 'Plus Jakarta Sans', sans-serif";
@@ -1804,6 +1809,7 @@
       cCtx.fillStyle = "#38bdf8";
       cCtx.fillText("DIJANA SECARA DIGITAL & SAH", w - 140, 1010);
 
+      // 8. LOGO KEMENTERIAN KEWANGAN JANM
       const imgJata = await safeGetImage('imgJata1', 'Logo Kementerian Kewangan JANM.png') || await safeGetImage('imgJata2', 'JATA NEGARA.png');
       if (imgJata && imgJata.naturalWidth > 0) {
         const jWidth = 145;
@@ -1822,6 +1828,7 @@
         cCtx.restore();
       }
 
+      // 9. LOGO 80 TAHUN JANM
       const img80 = await safeGetImage('imgLogo80', 'Logo 80 Tahun JANM.png');
       if (img80 && img80.naturalWidth > 0) {
         const lWidth = 135;
@@ -1829,6 +1836,7 @@
         cCtx.drawImage(img80, (w - lWidth) / 2, 800, lWidth, lHeight);
       }
 
+      // 10. KOD QR PENGESAHAN KETULENAN SIJIL
       const qrBoxX = w - 240;
       const qrBoxY = 830;
       const qrBoxSize = 96;
@@ -1953,6 +1961,7 @@
       try {
         let pdfBase64 = "";
         
+        // Resolusi Penuh HD (1600x1131) & Kualiti 0.88 (~250KB - Tajam Untuk Cetakan A4)
         const tempCanvas = document.createElement('canvas');
         tempCanvas.width = 1600;
         tempCanvas.height = 1131;
